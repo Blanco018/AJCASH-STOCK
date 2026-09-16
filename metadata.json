@@ -1,0 +1,7 @@
+{
+  "name": "AJCASH Stock",
+  "description": "Control de stock e inventario de guardia para vehículos de servicio técnico AJCASH.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
