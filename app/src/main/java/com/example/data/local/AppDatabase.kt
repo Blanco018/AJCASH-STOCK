@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.data.model.RevisionRecord
 import com.example.data.model.StockItem
 import com.example.data.model.Vehicle
 import kotlinx.coroutines.CoroutineScope
@@ -12,13 +13,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Vehicle::class, StockItem::class],
-    version = 6,
+    entities = [Vehicle::class, StockItem::class, RevisionRecord::class],
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun vehicleDao(): VehicleDao
     abstract fun stockDao(): StockDao
+    abstract fun revisionDao(): RevisionDao
 
     companion object {
         @Volatile
@@ -101,66 +103,99 @@ abstract class AppDatabase : RoomDatabase() {
             val vehicles = getDefaultVehicles()
             database.vehicleDao().insertVehicles(vehicles)
 
-            val stockTemplates = listOf(
-                // TPVs
-                StockTemplate("TPVs", "TPV Modelo x300", min = 2, unit = "uds"),
-                StockTemplate("TPVs", "TPV Modelo x500", min = 2, unit = "uds"),
-                StockTemplate("TPVs", "TPV Modelo x205", min = 1, unit = "uds"),
-                // Impresoras
-                StockTemplate("Impresoras", "Impresora 450", min = 2, unit = "uds"),
-                // Cables Ethernet
-                StockTemplate("Cables", "Cable Ethernet 0,5m", min = 3, unit = "uds"),
-                StockTemplate("Cables", "Cable Ethernet 1m", min = 4, unit = "uds"),
-                StockTemplate("Cables", "Cable Ethernet 2m", min = 4, unit = "uds"),
-                StockTemplate("Cables", "Cable Ethernet 3m", min = 3, unit = "uds"),
-                StockTemplate("Cables", "Cable Ethernet 5m", min = 2, unit = "uds"),
-                // Periféricos
-                StockTemplate("Periféricos", "Conjunto Teclado + Ratón", min = 2, unit = "packs"),
-                // Consumibles
-                StockTemplate("Consumibles", "Papel térmico 80x80", min = 10, unit = "rollos"),
-                StockTemplate("Consumibles", "Papel térmico 60x55", min = 10, unit = "rollos"),
-                // Red
-                StockTemplate("Red", "Switch 5 puertos", min = 2, unit = "uds"),
-                StockTemplate("Red", "Switch 8 puertos", min = 1, unit = "uds")
-            )
-
             val stockItems = mutableListOf<StockItem>()
 
             for (vehicle in vehicles) {
-                for (tmpl in stockTemplates) {
-                    val qty = when {
-                        vehicle.id == "coche_1" -> tmpl.min + 1
-                        vehicle.id == "furgoneta_1" -> tmpl.min + 2
-                        vehicle.id == "coche_2" && tmpl.name == "Switch 8 puertos" -> 0
-                        vehicle.id == "coche_2" && tmpl.name == "TPV Modelo x500" -> 1
-                        vehicle.id == "coche_2" -> tmpl.min
-                        vehicle.id == "furgoneta_2" && tmpl.name == "Papel térmico 80x80" -> 4
-                        vehicle.id == "furgoneta_2" -> tmpl.min + 1
-                        else -> tmpl.min
-                    }
-                    val deterministicId = "${vehicle.id}_${tmpl.category.lowercase()}_${tmpl.name.lowercase().replace(" ", "_").replace(",", "_").replace("+", "_")}"
+                val isVan = vehicle.type.contains("Furgoneta", ignoreCase = true)
+
+                val templates = listOf(
+                    // Cables Ethernet (todas las medidas de 0,5m a 5m) -> Mínimo 2 ud en todos
+                    StockRule("Cables", "Cable Ethernet 0,5m", 2, "uds", defaultQty = if (vehicle.id == "coche_2") 1 else 3),
+                    StockRule("Cables", "Cable Ethernet 1m", 2, "uds", defaultQty = 4),
+                    StockRule("Cables", "Cable Ethernet 2m", 2, "uds", defaultQty = 3),
+                    StockRule("Cables", "Cable Ethernet 3m", 2, "uds", defaultQty = 2),
+                    StockRule("Cables", "Cable Ethernet 5m", 2, "uds", defaultQty = 2),
+                    // TPVs
+                    StockRule("TPVs", "TPV Modelo x500", 0, "uds", defaultQty = 1),
+                    StockRule("TPVs", "TPV Modelo x205", 0, "uds", defaultQty = 0),
+                    // TPVs x300: 1 en Furgonetas | 0 en Coches
+                    StockRule("TPVs", "TPV Modelo x300", if (isVan) 1 else 0, "uds", defaultQty = if (isVan) 1 else 0),
+                    // Impresoras CP-450: Mínimo 2 ud en todos
+                    StockRule("Impresoras", "Impresora CP-450", 2, "uds", defaultQty = 2),
+                    // Periféricos: Teclado + Ratón -> Mínimo 1 pack en todos
+                    StockRule("Periféricos", "Conjunto Teclado + Ratón", 1, "pack", defaultQty = 1),
+                    // Red: Switch 5 y 8 puertos -> Mínimo 1 ud en todos
+                    StockRule("Red", "Switch 5 puertos", 1, "uds", defaultQty = 2),
+                    StockRule("Red", "Switch 8 puertos", 1, "uds", defaultQty = if (vehicle.id == "coche_2") 0 else 1),
+                    // Consumibles: Papel térmico 80x80 y 60x55 -> Mínimo 10 rollos en todos
+                    StockRule("Consumibles", "Papel térmico 80x80", 10, "rollos", defaultQty = if (vehicle.id == "furgoneta_2") 6 else 12),
+                    StockRule("Consumibles", "Papel térmico 60x55", 10, "rollos", defaultQty = 10),
+                    // NUEVO OBJETO BASE: Cajón portamonedas 41x41 -> 1 en Furgonetas | 0 en Coches
+                    StockRule("Periféricos", "Cajón portamonedas 41x41", if (isVan) 1 else 0, "uds", defaultQty = if (isVan) 1 else 0)
+                )
+
+                for (rule in templates) {
+                    val deterministicId = "${vehicle.id}_${rule.category.lowercase()}_${rule.name.lowercase().replace(" ", "_").replace(",", "_").replace("+", "_")}"
                     stockItems.add(
                         StockItem(
                             id = deterministicId,
                             vehicleId = vehicle.id,
-                            category = tmpl.category,
-                            name = tmpl.name,
-                            currentQuantity = qty,
-                            minimumQuantity = tmpl.min,
-                            unit = tmpl.unit
+                            category = rule.category,
+                            name = rule.name,
+                            currentQuantity = rule.defaultQty,
+                            minimumQuantity = rule.min,
+                            unit = rule.unit
                         )
                     )
                 }
             }
 
             database.stockDao().insertStockItems(stockItems)
+
+            // Auditoría e Historial de Revisiones inicial
+            val initialRevisions = listOf(
+                RevisionRecord(
+                    id = "rev_coche_1_init",
+                    vehicleId = "coche_1",
+                    technicianName = "CARLOS MARTÍNEZ",
+                    technicianNumber = "12",
+                    timestamp = System.currentTimeMillis() - (1000 * 60 * 45),
+                    changesSummary = "Sin cambios · Stock verificado conforme"
+                ),
+                RevisionRecord(
+                    id = "rev_coche_2_init",
+                    vehicleId = "coche_2",
+                    technicianName = "JAVIER SANZ",
+                    technicianNumber = "08",
+                    timestamp = System.currentTimeMillis() - (1000 * 60 * 60 * 6),
+                    changesSummary = "Se restaron 2 uds de Papel térmico 80x80\nSe repuso 1 ud de Switch 5 puertos"
+                ),
+                RevisionRecord(
+                    id = "rev_furgoneta_1_init",
+                    vehicleId = "furgoneta_1",
+                    technicianName = "MARCOS R.",
+                    technicianNumber = "04",
+                    timestamp = System.currentTimeMillis() - (1000 * 60 * 120),
+                    changesSummary = "Se añadió 1 ud de Cajón portamonedas 41x41\nSe añadió 1 ud de TPV Modelo x300"
+                ),
+                RevisionRecord(
+                    id = "rev_furgoneta_2_init",
+                    vehicleId = "furgoneta_2",
+                    technicianName = "PABLO BLANCO",
+                    technicianNumber = "16",
+                    timestamp = System.currentTimeMillis() - (1000 * 60 * 60 * 24),
+                    changesSummary = "Sin cambios · Guardia iniciada OK"
+                )
+            )
+            database.revisionDao().insertRevisions(initialRevisions)
         }
 
-        private data class StockTemplate(
+        private data class StockRule(
             val category: String,
             val name: String,
             val min: Int,
-            val unit: String
+            val unit: String,
+            val defaultQty: Int
         )
     }
 }

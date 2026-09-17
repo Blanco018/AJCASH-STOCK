@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
@@ -56,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -100,7 +102,13 @@ fun VehicleInventoryScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val showOnlyAlerts by viewModel.showOnlyAlerts.collectAsStateWithLifecycle()
+    val revisions by viewModel.getRevisionsForVehicle(vehicle.id).collectAsStateWithLifecycle(initialValue = emptyList<com.example.data.model.RevisionRecord>())
     var showConfigSheet by remember { mutableStateOf(false) }
+    var showHistoryDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(allVehicleItems) {
+        viewModel.captureInitialStockSnapshot(allVehicleItems)
+    }
 
     val totalItemsCount = if (allVehicleItems.isNotEmpty()) allVehicleItems.size else items.size
     val underMinimumCount = if (allVehicleItems.isNotEmpty()) allVehicleItems.count { it.isUnderMinimum } else items.count { it.isUnderMinimum }
@@ -179,6 +187,18 @@ fun VehicleInventoryScreen(
                             tint = AjCashGreen
                         )
                     }
+
+                    // Button to open Revision History
+                    IconButton(
+                        onClick = { showHistoryDialog = true },
+                        modifier = Modifier.testTag("vehicle_history_topbar_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Historial de revisiones",
+                            tint = AjCashGreen
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
@@ -224,7 +244,7 @@ fun VehicleInventoryScreen(
 
                     // Save / Confirm Revision Button
                     Button(
-                        onClick = { viewModel.confirmRevision(vehicle.id) },
+                        onClick = { viewModel.recordVehicleRevision(vehicle.id, allVehicleItems) },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp)
@@ -263,6 +283,92 @@ fun VehicleInventoryScreen(
                     underMinimumCount = underMinimumCount,
                     totalItems = totalItemsCount
                 )
+            }
+
+            // Prominent "HISTORIAL DE REVISIONES" Action Card
+            item {
+                Card(
+                    onClick = { showHistoryDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .testTag("vehicle_history_banner_button"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSystemInDarkTheme()) Color(0xFF14241B) else Color(0xFFF2FBF4)
+                    ),
+                    border = BorderStroke(1.5.dp, AjCashGreen)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(AjCashGreen.copy(alpha = 0.15f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.History,
+                                    contentDescription = null,
+                                    tint = AjCashGreen,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "HISTORIAL DE REVISIONES",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 13.5.sp,
+                                        letterSpacing = 0.3.sp,
+                                        color = AjCashGreen
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = AjCashGreen.copy(alpha = 0.2f)
+                                    ) {
+                                        Text(
+                                            text = "${revisions.size}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AjCashGreen,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Auditoría de técnicos y desglose cronológico de cambios",
+                                    fontSize = 11.sp,
+                                    color = SlateLight
+                                )
+                            }
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = AjCashGreen,
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) {
+                            Text(
+                                text = "Ver Historial",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             // Dedicated Vehicle Stock Minimums Configuration Section Card
@@ -533,6 +639,14 @@ fun VehicleInventoryScreen(
             onAddNewItem = { name, cat, min, cur, unit ->
                 viewModel.addNewItem(vehicle.id, name, cat, min, cur, unit)
             }
+        )
+    }
+
+    if (showHistoryDialog) {
+        VehicleRevisionHistoryDialog(
+            vehicle = vehicle,
+            revisions = revisions,
+            onDismiss = { showHistoryDialog = false }
         )
     }
 }

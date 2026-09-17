@@ -36,6 +36,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
@@ -70,6 +73,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -80,9 +84,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.data.model.RevisionRecord
 import com.example.data.model.StockItem
 import com.example.data.model.Vehicle
 import com.example.data.model.VehicleStockSummary
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.example.ui.theme.AjCashGreen
 import com.example.ui.theme.SlateBorder
 import com.example.ui.theme.SlateLight
@@ -96,9 +104,6 @@ import com.example.ui.theme.StatusGreenText
 import com.example.ui.theme.StatusRed
 import com.example.ui.theme.StatusRedBg
 import com.example.ui.theme.StatusRedText
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 fun getVehicleDrawable(drawableName: String): Int {
     return when (drawableName) {
@@ -130,6 +135,7 @@ fun VehicleCard(
 ) {
     val vehicle = summary.vehicle
     val isReady = summary.isReadyForGuard
+    val isVan = vehicle.type.contains("Furgoneta", ignoreCase = true)
     val imageRes = getVehicleDrawable(vehicle.imageDrawableName)
 
     Card(
@@ -145,79 +151,95 @@ fun VehicleCard(
             width = if (isReady) 1.dp else 1.5.dp,
             color = if (isReady) SlateBorder else StatusRed.copy(alpha = 0.5f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column {
-            // Space reserved for vehicle real photography
+            // Space reserved for vehicle real photography / branded fleet render
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
-                    .background(Color(0xFFE2E8F0))
+                    .height(175.dp)
+                    .background(Color(0xFF0F172A))
             ) {
                 Image(
                     painter = painterResource(id = imageRes),
                     contentDescription = "Fotografía de ${vehicle.name}",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp)
+                        .height(175.dp)
                         .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                     contentScale = ContentScale.Crop
                 )
 
-                // Vehicle Type Badge (Coche / Furgoneta)
+                // Top gradient overlay for badge legibility
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.55f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                // Vehicle Type & Fleet Origin Badge (top-left)
                 Surface(
                     modifier = Modifier
-                        .padding(12.dp)
+                        .padding(10.dp)
                         .align(Alignment.TopStart),
                     shape = RoundedCornerShape(20.dp),
-                    color = Color.Black.copy(alpha = 0.65f)
+                    color = Color.Black.copy(alpha = 0.75f),
+                    border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.3f))
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = if (vehicle.type.contains("Furgoneta", ignoreCase = true))
-                                Icons.Default.LocalShipping else Icons.Default.DirectionsCar,
+                            imageVector = if (isVan) Icons.Default.LocalShipping else Icons.Default.DirectionsCar,
                             contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
+                            tint = if (isVan) AjCashGreen else Color(0xFF38BDF8),
+                            modifier = Modifier.size(13.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(5.dp))
                         Text(
-                            text = vehicle.type,
+                            text = if (isVan) "Furgoneta" else "Coche",
                             color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
 
-                // Status Badge overlay
+                // Status Badge overlay (top-right)
                 Surface(
                     modifier = Modifier
-                        .padding(12.dp)
+                        .padding(10.dp)
                         .align(Alignment.TopEnd),
                     shape = RoundedCornerShape(20.dp),
-                    color = if (isReady) StatusGreen else StatusRed
+                    color = if (isReady) StatusGreen else StatusRed,
+                    shadowElevation = 2.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = if (isReady) Icons.Default.CheckCircle else Icons.Default.Warning,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(13.dp)
+                            modifier = Modifier.size(12.dp)
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = if (isReady) "GUARDIA OK" else "FALTA STOCK",
                             color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 0.5.sp
                         )
                     }
@@ -241,7 +263,7 @@ fun VehicleCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "${vehicle.type} · Matrícula: ${vehicle.plate}",
+                            text = "${vehicle.type} · Matrícula: ${vehicle.plate.replace("-", "")}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = SlateLight
                         )
@@ -1338,4 +1360,179 @@ fun AddNewStockItemDialog(
             }
         }
     )
+}
+
+@Composable
+fun VehicleRevisionHistoryDialog(
+    vehicle: Vehicle,
+    revisions: List<RevisionRecord>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.History,
+                        contentDescription = null,
+                        tint = AjCashGreen,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "HISTORIAL DE REVISIONES",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 17.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = "${vehicle.name} · ${vehicle.model} (${vehicle.plate})",
+                    fontSize = 12.sp,
+                    color = AjCashGreen,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        text = {
+            if (revisions.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No hay registros de revisiones previas.",
+                        fontSize = 13.sp,
+                        color = SlateLight
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(revisions, key = { it.id }) { rev ->
+                        RevisionAccordionItem(revision = rev)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
+                modifier = Modifier.testTag("close_revision_history_button")
+            ) {
+                Text("Cerrar", fontWeight = FontWeight.Bold)
+            }
+        }
+    )
+}
+
+@Composable
+fun RevisionAccordionItem(
+    revision: RevisionRecord,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val formattedDate = remember(revision.timestamp) { dateFormat.format(Date(revision.timestamp)) }
+    val isDark = isSystemInDarkTheme()
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { expanded = !expanded }
+            .testTag("revision_item_${revision.id}"),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) Color(0xFF162518) else Color(0xFFF8FAFC)
+        ),
+        border = BorderStroke(1.dp, if (expanded) AjCashGreen else SlateBorder)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "${revision.technicianName} (Téc. Nº ${revision.technicianNumber})",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = formattedDate,
+                        fontSize = 11.5.sp,
+                        color = SlateLight
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (expanded) "Ocultar" else "Ver cambios",
+                        fontSize = 11.sp,
+                        color = AjCashGreen,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (expanded) "Plegar" else "Desplegar",
+                        tint = AjCashGreen,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                        .background(
+                            if (isDark) Color(0xFF0F1A11) else Color(0xFFEDF2F7),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    revision.changesList.forEach { line ->
+                        val isSub = line.contains("rest", ignoreCase = true)
+                        val isAdd = line.contains("añad", ignoreCase = true) || line.contains("repus", ignoreCase = true)
+                        val textColor = when {
+                            isSub -> StatusRed
+                            isAdd -> StatusGreen
+                            else -> SlateMedium
+                        }
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "• ",
+                                color = textColor,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = line,
+                                fontSize = 12.sp,
+                                color = textColor,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

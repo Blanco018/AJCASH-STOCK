@@ -1,8 +1,10 @@
 package com.example.data.repository
 
 import com.example.data.local.AppDatabase
+import com.example.data.local.RevisionDao
 import com.example.data.local.StockDao
 import com.example.data.local.VehicleDao
+import com.example.data.model.RevisionRecord
 import com.example.data.model.StockItem
 import com.example.data.model.Vehicle
 import com.example.data.model.VehicleStockSummary
@@ -14,7 +16,8 @@ import kotlinx.coroutines.withContext
 class StockRepository(
     private val database: AppDatabase,
     private val vehicleDao: VehicleDao,
-    private val stockDao: StockDao
+    private val stockDao: StockDao,
+    private val revisionDao: RevisionDao = database.revisionDao()
 ) {
     val vehiclesWithSummaries: Flow<List<VehicleStockSummary>> =
         combine(
@@ -76,13 +79,39 @@ class StockRepository(
         stockDao.updateStockItem(item)
     }
 
-    suspend fun restoreVehicleToMinimums(vehicleId: String) = withContext(Dispatchers.IO) {
+    suspend fun restoreVehicleToMinimums(vehicleId: String, reviewerName: String = "Reposición de Mínimos") = withContext(Dispatchers.IO) {
         stockDao.restoreVehicleToMinimums(vehicleId)
-        vehicleDao.updateRevision(vehicleId, System.currentTimeMillis(), "Reposición de Mínimos")
+        vehicleDao.updateRevision(vehicleId, System.currentTimeMillis(), reviewerName)
     }
 
     suspend fun confirmRevision(vehicleId: String, reviewerName: String) = withContext(Dispatchers.IO) {
         vehicleDao.updateRevision(vehicleId, System.currentTimeMillis(), reviewerName)
+    }
+
+    fun getRevisionsForVehicle(vehicleId: String): Flow<List<RevisionRecord>> {
+        return revisionDao.getRevisionsForVehicle(vehicleId)
+    }
+
+    suspend fun recordRevision(
+        vehicleId: String,
+        technicianName: String,
+        technicianNumber: String,
+        changes: List<String>
+    ) = withContext(Dispatchers.IO) {
+        val summary = if (changes.isEmpty()) {
+            "Sin cambios · Stock verificado conforme"
+        } else {
+            changes.joinToString("\n")
+        }
+        val record = RevisionRecord(
+            vehicleId = vehicleId,
+            technicianName = technicianName.trim().uppercase(),
+            technicianNumber = technicianNumber.trim(),
+            timestamp = System.currentTimeMillis(),
+            changesSummary = summary
+        )
+        revisionDao.insertRevision(record)
+        vehicleDao.updateRevision(vehicleId, System.currentTimeMillis(), "${record.technicianName} (#${record.technicianNumber})")
     }
 
     suspend fun ensureDatabaseSeeded() = withContext(Dispatchers.IO) {
@@ -91,6 +120,25 @@ class StockRepository(
         } else {
             // Ensure vehicle models and plates are updated to the official values
             vehicleDao.insertVehicles(AppDatabase.getDefaultVehicles())
+
+            // Ensure every vehicle has Cajón portamonedas 41x41 and the exact defaults
+            val vehicles = AppDatabase.getDefaultVehicles()
+            for (vehicle in vehicles) {
+                val isVan = vehicle.type.contains("Furgoneta", ignoreCase = true)
+                val drawerId = "${vehicle.id}_periféricos_cajón_portamonedas_41x41"
+                addNewItemToVehicle(
+                    vehicleId = vehicle.id,
+                    name = "Cajón portamonedas 41x41",
+                    category = "Periféricos",
+                    minimumQuantity = if (isVan) 1 else 0,
+                    initialQuantity = if (isVan) 1 else 0,
+                    unit = "uds"
+                )
+            }
+
+            if (revisionDao.getCount() == 0) {
+                AppDatabase.seedDatabase(database)
+            }
         }
     }
 }

@@ -24,15 +24,23 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,6 +81,87 @@ fun DashboardScreen(
     val totalVehicles = vehiclesSummaries.size
     val readyVehicles = vehiclesSummaries.count { it.isReadyForGuard }
     val pendingVehicles = vehiclesSummaries.count { !it.isReadyForGuard }
+
+    var pendingVehicle by remember { mutableStateOf<com.example.data.model.Vehicle?>(null) }
+    var showAuthModal by remember { mutableStateOf(false) }
+    val currentTechName by viewModel.technicianName.collectAsStateWithLifecycle()
+    val currentTechNumber by viewModel.technicianNumber.collectAsStateWithLifecycle()
+    var techNameInput by remember(currentTechName) { mutableStateOf(currentTechName) }
+    var techNumInput by remember(currentTechNumber) { mutableStateOf(currentTechNumber) }
+
+    if (showAuthModal && pendingVehicle != null) {
+        val targetVehicle = pendingVehicle!!
+        AlertDialog(
+            onDismissRequest = { showAuthModal = false },
+            title = {
+                Column {
+                    Text(
+                        text = "REGISTRO DE TÉCNICO",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 17.sp,
+                        color = AjCashGreen
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "Identifícate para acceder a ${targetVehicle.name} · ${targetVehicle.plate}",
+                        fontSize = 12.sp,
+                        color = SlateLight
+                    )
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = techNameInput,
+                        onValueChange = { techNameInput = it },
+                        label = { Text("Nombre y Apellidos *") },
+                        placeholder = { Text("Ej: PABLO BLANCO") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("tech_name_input")
+                    )
+
+                    OutlinedTextField(
+                        value = techNumInput,
+                        onValueChange = { techNumInput = it },
+                        label = { Text("Nº de Técnico *") },
+                        placeholder = { Text("Ej: 16") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("tech_number_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.startVehicleInspection(
+                            vehicleId = targetVehicle.id,
+                            name = techNameInput,
+                            number = techNumInput
+                        )
+                        showAuthModal = false
+                        onVehicleSelected(targetVehicle.id)
+                    },
+                    enabled = techNameInput.isNotBlank() && techNumInput.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
+                    modifier = Modifier.testTag("submit_tech_auth_button")
+                ) {
+                    Text("Acceder al Inventario", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showAuthModal = false },
+                    modifier = Modifier.testTag("cancel_tech_auth_button")
+                ) {
+                    Text("Cancelar", color = SlateLight)
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = modifier
@@ -127,7 +216,12 @@ fun DashboardScreen(
                 Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     VehicleCard(
                         summary = summary,
-                        onClick = { onVehicleSelected(summary.vehicle.id) }
+                        onClick = {
+                            pendingVehicle = summary.vehicle
+                            techNameInput = currentTechName
+                            techNumInput = currentTechNumber
+                            showAuthModal = true
+                        }
                     )
                 }
             }
