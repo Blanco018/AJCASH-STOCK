@@ -39,4 +39,8 @@ interface StockDao {
 
     @Query("SELECT COUNT(*) FROM stock_items")
     suspend fun getCount(): Int
+
+    @Query("UPDATE stock_items SET currentQuantity = minimumQuantity WHERE currentQuantity < minimumQuantity")
+    suspend fun restoreAllToMinimums()
 }
+

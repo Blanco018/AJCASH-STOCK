@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,7 +23,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudDone
+
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
@@ -93,10 +96,19 @@ fun DashboardScreen(
     var pendingVehicle by remember { mutableStateOf<com.example.data.model.Vehicle?>(null) }
     var showTechnicianSelectionModal by remember { mutableStateOf(false) }
     var showTechniciansManagerModal by remember { mutableStateOf(false) }
+    var showRestockSummaryModal by remember { mutableStateOf(false) }
 
     val allTechnicians by viewModel.allTechnicians.collectAsStateWithLifecycle()
     val selectedTechnician by viewModel.selectedTechnician.collectAsStateWithLifecycle()
     val cloudSyncState by viewModel.cloudSyncState.collectAsStateWithLifecycle()
+
+    // Diálogo emergente interactivo: Resumen de Materiales a Reponer
+    if (showRestockSummaryModal) {
+        RestockSummaryDialog(
+            vehiclesSummaries = vehiclesSummaries,
+            onDismiss = { showRestockSummaryModal = false }
+        )
+    }
 
     // Gestor de Técnicos: creación y borrado con confirmación
     if (showTechniciansManagerModal) {
@@ -150,7 +162,8 @@ fun DashboardScreen(
                 totalVehicles = totalVehicles,
                 readyVehicles = readyVehicles,
                 pendingVehicles = pendingVehicles,
-                onOpenTechniciansManager = { showTechniciansManagerModal = true }
+                onOpenTechniciansManager = { showTechniciansManagerModal = true },
+                onOpenRestockSummary = { showRestockSummaryModal = true }
             )
         }
 
@@ -316,7 +329,8 @@ fun CorporateHeader(
     readyVehicles: Int,
     pendingVehicles: Int,
     modifier: Modifier = Modifier,
-    onOpenTechniciansManager: () -> Unit = {}
+    onOpenTechniciansManager: () -> Unit = {},
+    onOpenRestockSummary: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -435,7 +449,7 @@ fun CorporateHeader(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Fleet Summary KPI Cards (Actionable stock status, removed redundant total vehicle count)
+            // Fleet Summary KPI Cards (Actionable stock status, click to view restock summary modal)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -446,7 +460,10 @@ fun CorporateHeader(
                     color = Color(0xFF86EFAC),
                     bg = Color(0xFF14532D).copy(alpha = 0.5f),
                     icon = Icons.Default.CheckCircle,
-                    modifier = Modifier.weight(1f)
+                    onClick = onOpenRestockSummary,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("stock_completo_kpi_pill")
                 )
                 FleetKpiPill(
                     label = "Requieren Reponer",
@@ -454,7 +471,10 @@ fun CorporateHeader(
                     color = Color(0xFFFCA5A5),
                     bg = Color(0xFF7F1D1D).copy(alpha = 0.5f),
                     icon = Icons.Default.Warning,
-                    modifier = Modifier.weight(1f)
+                    onClick = onOpenRestockSummary,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("requieren_reponer_kpi_pill")
                 )
             }
         }
@@ -468,12 +488,16 @@ fun FleetKpiPill(
     color: Color,
     bg: Color,
     modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector? = null
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    onClick: (() -> Unit)? = null
 ) {
     Surface(
+        onClick = onClick ?: {},
+        enabled = onClick != null,
         modifier = modifier,
         shape = RoundedCornerShape(10.dp),
-        color = bg
+        color = bg,
+        border = if (onClick != null) BorderStroke(1.dp, color.copy(alpha = 0.4f)) else null
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
@@ -490,12 +514,23 @@ fun FleetKpiPill(
                 Spacer(modifier = Modifier.width(6.dp))
             }
             Column {
-                Text(
-                    text = value,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Black,
-                    color = color
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = value,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Black,
+                        color = color
+                    )
+                    if (onClick != null) {
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "Ver detalles",
+                            tint = color.copy(alpha = 0.6f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+                }
                 Text(
                     text = label,
                     fontSize = 10.sp,

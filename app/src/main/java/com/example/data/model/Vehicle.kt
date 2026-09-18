@@ -12,7 +12,8 @@ data class Vehicle(
     val type: String, // "Coche de empresa" or "Furgoneta de empresa"
     val plate: String,
     val imageDrawableName: String, // e.g. "vehicle_car_1"
-    val lastRevisionTimestamp: Long = System.currentTimeMillis(),
-    val lastReviewedBy: String = "Técnico de Guardia",
+    val lastRevisionTimestamp: Long? = null,
+    val lastReviewedBy: String = "",
     val notes: String = ""
 )
+

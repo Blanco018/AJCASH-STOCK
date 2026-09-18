@@ -64,4 +64,21 @@ class ExampleUnitTest {
         assertEquals("PABLO BLANCO", tech.name)
         assertEquals("16", tech.number)
     }
+
+    @Test
+    fun deficientItemSummary_correctMissingQuantityCalculation() {
+        val deficient = com.example.data.model.DeficientItemSummary(
+            name = "Switch 8 puertos",
+            currentQuantity = 0,
+            minimumQuantity = 1,
+            missingQuantity = 1,
+            unit = "uds"
+        )
+        assertEquals("Switch 8 puertos", deficient.name)
+        assertEquals(1, deficient.missingQuantity)
+        assertEquals(0, deficient.currentQuantity)
+        assertEquals(1, deficient.minimumQuantity)
+        assertEquals("uds", deficient.unit)
+    }
 }
+

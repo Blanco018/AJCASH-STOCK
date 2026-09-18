@@ -6,6 +6,7 @@ import com.example.data.local.RevisionDao
 import com.example.data.local.StockDao
 import com.example.data.local.TechnicianDao
 import com.example.data.local.VehicleDao
+import com.example.data.model.DeficientItemSummary
 import com.example.data.model.RevisionRecord
 import com.example.data.model.StockItem
 import com.example.data.model.Technician
@@ -46,11 +47,21 @@ class StockRepository(
             vehicles.map { vehicle ->
                 val vehicleItems = allItems.filter { it.vehicleId == vehicle.id }
                 val underMinimumItems = vehicleItems.filter { it.isUnderMinimum }
+                val deficientSummaries = underMinimumItems.map {
+                    DeficientItemSummary(
+                        name = it.name,
+                        currentQuantity = it.currentQuantity,
+                        minimumQuantity = it.minimumQuantity,
+                        missingQuantity = (it.minimumQuantity - it.currentQuantity).coerceAtLeast(0),
+                        unit = it.unit
+                    )
+                }
                 VehicleStockSummary(
                     vehicle = vehicle,
                     totalItems = vehicleItems.size,
                     underMinimumCount = underMinimumItems.size,
-                    criticalDeficits = underMinimumItems.map { "${it.name} (${it.currentQuantity}/${it.minimumQuantity} ${it.unit})" }
+                    criticalDeficits = underMinimumItems.map { "${it.name} (${it.currentQuantity}/${it.minimumQuantity} ${it.unit})" },
+                    deficientItems = deficientSummaries
                 )
             }
         }
@@ -271,11 +282,12 @@ class StockRepository(
                     unit = "uds"
                 )
             }
-
-            if (revisionDao.getCount() == 0) {
-                AppDatabase.seedDatabase(database)
-            }
         }
+
+        // Limpieza garantizada de historiales de revisiones ficticios previos e inicio de inventario al 100%
+        revisionDao.deleteAllRevisions()
+        vehicleDao.resetAllRevisionsMetadata()
+        stockDao.restoreAllToMinimums()
 
         // Si Firestore está disponible, sincronizar datos iniciales si la colección estuviera vacía
         firestoreService?.let { service ->

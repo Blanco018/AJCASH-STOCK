@@ -721,14 +721,19 @@ fun VehicleHeroBanner(
                             fontWeight = FontWeight.Bold,
                             color = AjCashGreen
                         )
+                        val revText = if (vehicle.lastRevisionTimestamp != null && vehicle.lastRevisionTimestamp > 0L) {
+                            "Última confirmada: ${formatTimestamp(vehicle.lastRevisionTimestamp)}"
+                        } else {
+                            "Sin revisiones registradas"
+                        }
                         Text(
-                            text = "Última confirmada: ${formatTimestamp(vehicle.lastRevisionTimestamp)}",
+                            text = revText,
                             fontSize = 12.sp,
                             color = SlateMedium
                         )
                     }
                     Text(
-                        text = vehicle.lastReviewedBy,
+                        text = if (vehicle.lastReviewedBy.isNotBlank()) vehicle.lastReviewedBy else "Pendiente de inicio",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = SlateLight

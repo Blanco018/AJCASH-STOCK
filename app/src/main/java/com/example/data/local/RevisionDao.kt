@@ -20,4 +20,8 @@ interface RevisionDao {
 
     @Query("SELECT COUNT(*) FROM revision_records")
     suspend fun getCount(): Int
+
+    @Query("DELETE FROM revision_records")
+    suspend fun deleteAllRevisions()
 }
+

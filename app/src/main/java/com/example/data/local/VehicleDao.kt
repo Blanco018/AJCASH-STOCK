@@ -30,4 +30,8 @@ interface VehicleDao {
 
     @Query("SELECT COUNT(*) FROM vehicles")
     suspend fun getCount(): Int
+
+    @Query("UPDATE vehicles SET lastRevisionTimestamp = NULL, lastReviewedBy = ''")
+    suspend fun resetAllRevisionsMetadata()
 }
+

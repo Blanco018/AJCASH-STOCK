@@ -115,7 +115,8 @@ fun getVehicleDrawable(drawableName: String): Int {
     }
 }
 
-fun formatTimestamp(timestamp: Long): String {
+fun formatTimestamp(timestamp: Long?): String {
+    if (timestamp == null || timestamp <= 0L) return "Sin revisiones registradas"
     val date = Date(timestamp)
     val now = System.currentTimeMillis()
     val diffHours = (now - timestamp) / (1000 * 60 * 60)
@@ -126,6 +127,7 @@ fun formatTimestamp(timestamp: Long): String {
         else -> SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(date)
     }
 }
+
 
 @Composable
 fun VehicleCard(
@@ -1370,6 +1372,8 @@ fun VehicleRevisionHistoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1E1E1E),
+        shape = RoundedCornerShape(18.dp),
         title = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1384,31 +1388,62 @@ fun VehicleRevisionHistoryDialog(
                         text = "HISTORIAL DE REVISIONES",
                         fontWeight = FontWeight.Black,
                         fontSize = 17.sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
                 }
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${vehicle.name} · ${vehicle.model} (${vehicle.plate})",
+                    text = "${vehicle.name} · ${vehicle.model} (${vehicle.plate.replace("-", "")})",
                     fontSize = 12.sp,
                     color = AjCashGreen,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold
                 )
             }
         },
         text = {
             if (revisions.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF262626)),
+                    border = BorderStroke(1.dp, Color(0xFF383838)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "No hay registros de revisiones previas.",
-                        fontSize = 13.sp,
-                        color = SlateLight
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 28.dp, horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(Color(0xFF333333), CircleShape)
+                                .border(1.dp, Color(0xFF444444), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = Color(0xFF888888),
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Sin revisiones registradas",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Este vehículo aún no tiene intervenciones o revisiones guardadas.",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.65f),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -1426,7 +1461,11 @@ fun VehicleRevisionHistoryDialog(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AjCashGreen,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.testTag("close_revision_history_button")
             ) {
                 Text("Cerrar", fontWeight = FontWeight.Bold)
