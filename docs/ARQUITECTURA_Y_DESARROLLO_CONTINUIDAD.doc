@@ -1,0 +1,224 @@
+================================================================================
+GUÍA DE ARQUITECTURA, DESARROLLO Y CONTINUIDAD TÉCNICA - APP AJCASH-STOCK
+================================================================================
+Empresa: AJ CA$H - Soluciones y Control en el Punto de Venta
+Ubicación: Avda. Gómez de Avellaneda, 67 · 50018 Zaragoza
+Proyecto: Control de Stock e Inventario de Guardia en Vehículos Técnicos
+Fecha de actualización: 2026-09-17
+Versión: 2.0 (Sincronización en Tiempo Real con Firebase Firestore + Room SSOT)
+================================================================================
+
+[1. OBJETIVO DEL PROYECTO Y CONTEXTO OPERATIVO]
+--------------------------------------------------------------------------------
+La aplicación Android AJCASH-STOCK está diseñada para que el equipo de servicio
+técnico de guardia (asistencia técnica 365 días al año a TPVs, balanzas,
+registradoras, impresoras y redes en hostelería y comercio) controle y audite en
+tiempo real el material embarcado en cada vehículo de la empresa.
+
+Flujo de trabajo habitual:
+1. El técnico de guardia selecciona el vehículo que conducirá durante su turno.
+2. Introduce su Nombre y Nº de Técnico (por defecto: PABLO BLANCO, Técnico #16).
+3. Revisa los artículos (TPVs, impresoras térmicas, cajones portamonedas, cables,
+   bobinas de papel térmico, routers, switchs, etc.).
+4. Si realiza una intervención en un cliente, descuenta el material usado pulsando
+   en el botón '-' o editando el stock.
+5. Gracias a la integración de Firestore en tiempo real, cualquier otro técnico
+   o el coordinador de guardia ve instantáneamente el decremento en su propio
+   dispositivo.
+
+
+[2. DATOS OFICIALES DE LA FLOTA DE VEHÍCULOS]
+--------------------------------------------------------------------------------
+El parque móvil corporativo consta exactamente de 4 vehículos (2 coches y 2 furgonetas).
+Los datos, modelos, matrículas e imágenes asignadas son inmutables y obligatorios:
+
+1) Coche 1:
+   - ID: "car_1"
+   - Nombre: "Coche 1"
+   - Modelo: "Opel Corsa"
+   - Matrícula: "0315-JVP"
+   - Tipo: "Coche de empresa"
+   - Imagen en drawable: "vehicle_car_1.jpg"
+   - Formato en pantalla: "Coche de empresa · Matrícula: 0315JVP"
+
+2) Coche 2:
+   - ID: "car_2"
+   - Nombre: "Coche 2"
+   - Modelo: "Clio"
+   - Matrícula: "8268-HVX"
+   - Tipo: "Coche de empresa"
+   - Imagen en drawable: "vehicle_car_2.jpg"
+   - Formato en pantalla: "Coche de empresa · Matrícula: 8268HVX"
+
+3) Furgoneta 1:
+   - ID: "van_1"
+   - Nombre: "Furgoneta 1"
+   - Modelo: "Peugeot Bipper"
+   - Matrícula: "9101-HYL"
+   - Tipo: "Furgoneta de empresa"
+   - Imagen en drawable: "vehicle_van_1.jpg"
+   - Formato en pantalla: "Furgoneta de empresa · Matrícula: 9101HYL"
+
+4) Furgoneta 2:
+   - ID: "van_2"
+   - Nombre: "Furgoneta 2"
+   - Modelo: "Renault Express"
+   - Matrícula: "1025-MJH"
+   - Tipo: "Furgoneta de empresa"
+   - Imagen en drawable: "vehicle_van_2.jpg"
+   - Formato en pantalla: "Furgoneta de empresa · Matrícula: 1025MJH"
+
+
+[3. DECISIONES DE DISEÑO Y REGLAS DE UI VIGENTES]
+--------------------------------------------------------------------------------
+IMPORTANTE PARA FUTURAS IAS Y DESARROLLADORES: No deshacer estas decisiones
+tomadas expresamente a petición del usuario:
+
+A) Subtítulo de vehículos en tarjetas y detalle:
+   - Debe figurar siempre como:
+     "${vehicle.type} · Matrícula: ${vehicle.plate.replace("-", "")}"
+   - Ejemplo: "Coche de empresa · Matrícula: 0315JVP"
+   - NO cambiarlo a "Vehículo comercial / técnico" ni abreviaturas genéricas.
+
+B) Limpieza visual de las imágenes de vehículos (Components.kt):
+   - Arriba a la izquierda: Sólo aparece la insignia limpia con el icono y la
+     palabra "Coche" o "Furgoneta". (Se eliminó "Flota AJCASH" y "Foto Real").
+   - Abajo a la izquierda: NO añadir ninguna matrícula ficticia superpuesta
+     sobre la foto. La foto debe lucir limpia. La matrícula ya está claramente
+     indicada en el subtítulo de la tarjeta.
+   - Arriba a la derecha: Distintivo de estado ("GUARDIA OK" en verde o
+     "FALTA STOCK" en rojo).
+
+
+[4. ARQUITECTURA TÉCNICA DEL SISTEMA (OFFLINE-FIRST + FIRESTORE REAL-TIME)]
+--------------------------------------------------------------------------------
+La arquitectura implementada combina lo mejor de dos mundos:
+- Room Database (Android Jetpack): Actúa como Single Source of Truth (SSOT).
+  Ofrece latencia 0 ms, funcionamiento sin conexión a internet y reactividad
+  mediante Kotlin Flow.
+- Firebase Cloud Firestore: Actúa como capa de sincronización en la nube en tiempo
+  real y persistencia distribuida para toda la plantilla técnica.
+
+Componentes clave:
+
+1. Modelo de datos local y remoto:
+   - `StockItem` (data/model/StockItem.kt): Entidad Room local.
+   - `FirestoreStockItem` (data/remote/FirestoreStockItem.kt): Modelo transferible
+     a Firestore con `@IgnoreExtraProperties`, serialización automática y marcas
+     de tiempo de servidor.
+   - Colección Firestore: "inventory".
+     Clave de documento: `${vehicleId}_${categoria}_${nombre_normalizado}`.
+     Garantiza idéntica clave en todos los móviles evitando duplicados.
+
+2. Repositorio reactivo (`StockRepository.kt`):
+   - `startRealtimeCloudSync(scope)`: Conecta un listener de instantáneas
+     (`addSnapshotListener` encapsulado en `callbackFlow`). Al recibir cambios
+     de la nube (emitidos por otro compañero), los inserta en Room
+     (`stockDao.insertStockItems`). Esto desencadena inmediatamente la emisión
+     del Flow de Room a la UI.
+   - `updateQuantity(itemId, newQuantity, technicianName)`:
+     1º Actualiza Room al instante (la UI responde inmediatamente sin lag).
+     2º Envía la actualización a Firestore de forma atómica en background.
+   - `cloudSyncState`: Expone el estado (`ONLINE_SYNCED`, `SYNCING`, `OFFLINE_LOCAL`).
+
+3. ViewModel (`StockViewModel.kt`):
+   - Expone `cloudSyncState: StateFlow<CloudSyncState>`.
+   - Expone `vehiclesSummary` y `currentVehicleItems` como StateFlows activos con
+     `SharingStarted.WhileSubscribed(5000)` para no consumir recursos innecesarios
+     cuando la pantalla se apaga o la app pasa a background.
+   - Asocia cada movimiento de stock con la firma del técnico activo
+     ("PABLO BLANCO (#16)").
+
+4. Pantallas Compose (`DashboardScreen.kt` y `VehicleInventoryScreen.kt`):
+   - Utilizan `collectAsStateWithLifecycle()` para respetar escrupulosamente el
+     ciclo de vida de Android.
+   - Muestran una pastilla / icono de estado de sincronización en la nube:
+     * Icono verde CloudDone: "En tiempo real" (Firestore activo y sincronizado).
+     * Icono ámbar Sync: "Sincronizando..."
+     * Icono gris CloudOff: "Modo local" (Room activo, seguro sin conexión).
+
+
+[5. CONFIGURACIÓN DE FIREBASE PARA PRODUCCIÓN]
+--------------------------------------------------------------------------------
+Para activar la conexión con Firebase en un nuevo entorno:
+
+1. En la consola de Firebase (https://console.firebase.google.com/):
+   - Crear un proyecto llamado "AJCASH-STOCK" (o similar).
+   - Añadir una aplicación Android con el ApplicationId:
+     `com.aistudio.ajcashstock.vkpq`
+   - Descargar el archivo `google-services.json` y copiarlo en:
+     `/app/google-services.json`
+
+2. En `app/build.gradle.kts`:
+   - Las dependencias ya están configuradas:
+     `implementation(platform(libs.firebase.bom))`
+     `implementation(libs.firebase.firestore)`
+   - El plugin ya está activo: `alias(libs.plugins.google.services)`
+
+3. Reglas de seguridad recomendadas para Cloud Firestore:
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /inventory/{itemId} {
+         allow read, write: if true; // O restringido a técnicos autenticados
+       }
+       match /revisions/{revisionId} {
+         allow read, write: if true;
+       }
+       match /vehicles/{vehicleId} {
+         allow read: if true;
+         allow write: if false; // Solo lectura para la flota base
+       }
+     }
+   }
+
+
+[6. COMANDOS DE COMPILACIÓN Y TESTING PARA FUTURAS IAS]
+--------------------------------------------------------------------------------
+- Compilación del proyecto:
+  Utilizar la herramienta `compile_applet` o ejecutar:
+  `gradle :app:assembleDebug`
+
+- Ejecución de pruebas unitarias y de arquitectura:
+  `gradle :app:testDebugUnitTest`
+
+- Regla de oro:
+  NUNCA borrar `debug.keystore`, `AndroidManifest.xml` ni cambiar la estructura
+  de nombres de los drawables `vehicle_car_1`, `vehicle_car_2`, `vehicle_van_1`, `vehicle_van_2`.
+
+
+[7. MÓDULO GESTOR DE TÉCNICOS Y SELECCIÓN ÁGIL EN VEHÍCULOS]
+--------------------------------------------------------------------------------
+1. Arquitectura de Datos de Técnicos:
+   - Entidad Room: `Technician` (`id`, `name`, `number`) con clave primaria `id`.
+   - DAO: `TechnicianDao` con soporte reactivo `Flow<List<Technician>>`.
+   - Colección Firestore sincronizada: `/technicians/{techId}`.
+   - Técnicos iniciales precargados (seeding):
+     * PABLO BLANCO (Nº 16)
+     * CARLOS MARTÍNEZ (Nº 08)
+     * JAVIER SANZ (Nº 12)
+     * MARCOS RUBIO (Nº 15)
+
+2. Gestor de Técnicos (`TechniciansManagerDialog`):
+   - Accesible exclusivamente mediante el botón de estilo píldora "GESTOR TÉCNICOS" en la cabecera superior
+     derecha (Top Bar), o desde el diálogo de selección de vehículos.
+   - Diseño limpio y directo: Se eliminó la tarjeta central redundante para maximizar el área visible
+     de la flota técnica y evitar elementos visuales recargados.
+   - Creación de técnicos: Formulario con campos "Nombre y Apellidos" (mayúsculas) y "Nº de Técnico".
+   - Eliminación con confirmación obligatoria: Todo intento de borrado dispara un
+     `AlertDialog` de confirmación explícita (ej. "¿Estás seguro de que deseas eliminar al técnico [Nombre]?")
+     para prevenir accidentes operativos durante una guardia.
+   - Los cambios locales se replican automáticamente a Cloud Firestore en tiempo real.
+
+3. Selección Ágil al Abrir un Vehículo (`TechnicianSelectionDialog`):
+   - Al pulsar en cualquier tarjeta de vehículo, se despliega un diálogo con un menú
+     desplegable (`ExposedDropdownMenuBox`) con todos los técnicos registrados en plantilla.
+   - El técnico seleccionado queda asignado como el responsable de la sesión y
+     se utiliza como firma en todas las auditorías, revisiones y deltas de stock.
+   - Si se requiere dar de alta a un nuevo técnico durante el proceso, un botón directo
+     permite abrir el Gestor sin perder el contexto del vehículo seleccionado.
+
+
+===============================================================================
+FIN DEL DOCUMENTO DE CONTINUIDAD
+===============================================================================

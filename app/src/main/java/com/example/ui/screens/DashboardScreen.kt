@@ -20,10 +20,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Warning
+import com.example.data.model.Technician
+import com.example.data.remote.CloudSyncState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -58,6 +65,7 @@ import com.example.ui.theme.AjCashGreen
 import com.example.ui.theme.AjCashGreenDark
 import com.example.ui.theme.AjCashGreenDarker
 import com.example.ui.theme.AjCashGreenLight
+import com.example.ui.theme.AjCashGreenSubtle
 import com.example.ui.theme.SlateBorder
 import com.example.ui.theme.SlateDark
 import com.example.ui.theme.SlateLight
@@ -83,82 +91,49 @@ fun DashboardScreen(
     val pendingVehicles = vehiclesSummaries.count { !it.isReadyForGuard }
 
     var pendingVehicle by remember { mutableStateOf<com.example.data.model.Vehicle?>(null) }
-    var showAuthModal by remember { mutableStateOf(false) }
-    val currentTechName by viewModel.technicianName.collectAsStateWithLifecycle()
-    val currentTechNumber by viewModel.technicianNumber.collectAsStateWithLifecycle()
-    var techNameInput by remember(currentTechName) { mutableStateOf(currentTechName) }
-    var techNumInput by remember(currentTechNumber) { mutableStateOf(currentTechNumber) }
+    var showTechnicianSelectionModal by remember { mutableStateOf(false) }
+    var showTechniciansManagerModal by remember { mutableStateOf(false) }
 
-    if (showAuthModal && pendingVehicle != null) {
+    val allTechnicians by viewModel.allTechnicians.collectAsStateWithLifecycle()
+    val selectedTechnician by viewModel.selectedTechnician.collectAsStateWithLifecycle()
+    val cloudSyncState by viewModel.cloudSyncState.collectAsStateWithLifecycle()
+
+    // Gestor de Técnicos: creación y borrado con confirmación
+    if (showTechniciansManagerModal) {
+        TechniciansManagerDialog(
+            technicians = allTechnicians,
+            onAddTechnician = { name, number ->
+                viewModel.createTechnician(name, number)
+            },
+            onDeleteTechnician = { tech ->
+                viewModel.deleteTechnician(tech)
+            },
+            onDismiss = {
+                showTechniciansManagerModal = false
+            }
+        )
+    }
+
+    // Selector ágil de Técnico al seleccionar un vehículo
+    if (showTechnicianSelectionModal && pendingVehicle != null) {
         val targetVehicle = pendingVehicle!!
-        AlertDialog(
-            onDismissRequest = { showAuthModal = false },
-            title = {
-                Column {
-                    Text(
-                        text = "REGISTRO DE TÉCNICO",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 17.sp,
-                        color = AjCashGreen
-                    )
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = "Identifícate para acceder a ${targetVehicle.name} · ${targetVehicle.plate}",
-                        fontSize = 12.sp,
-                        color = SlateLight
-                    )
-                }
+        TechnicianSelectionDialog(
+            vehicle = targetVehicle,
+            technicians = allTechnicians,
+            selectedTechnician = selectedTechnician,
+            onTechnicianSelected = { tech ->
+                viewModel.selectTechnician(tech)
             },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = techNameInput,
-                        onValueChange = { techNameInput = it },
-                        label = { Text("Nombre y Apellidos *") },
-                        placeholder = { Text("Ej: PABLO BLANCO") },
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("tech_name_input")
-                    )
-
-                    OutlinedTextField(
-                        value = techNumInput,
-                        onValueChange = { techNumInput = it },
-                        label = { Text("Nº de Técnico *") },
-                        placeholder = { Text("Ej: 16") },
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("tech_number_input")
-                    )
-                }
+            onConfirmSelection = { tech ->
+                viewModel.startVehicleInspectionWithTechnician(targetVehicle.id, tech)
+                showTechnicianSelectionModal = false
+                onVehicleSelected(targetVehicle.id)
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.startVehicleInspection(
-                            vehicleId = targetVehicle.id,
-                            name = techNameInput,
-                            number = techNumInput
-                        )
-                        showAuthModal = false
-                        onVehicleSelected(targetVehicle.id)
-                    },
-                    enabled = techNameInput.isNotBlank() && techNumInput.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
-                    modifier = Modifier.testTag("submit_tech_auth_button")
-                ) {
-                    Text("Acceder al Inventario", fontWeight = FontWeight.Bold)
-                }
+            onOpenManager = {
+                showTechniciansManagerModal = true
             },
-            dismissButton = {
-                TextButton(
-                    onClick = { showAuthModal = false },
-                    modifier = Modifier.testTag("cancel_tech_auth_button")
-                ) {
-                    Text("Cancelar", color = SlateLight)
-                }
+            onDismiss = {
+                showTechnicianSelectionModal = false
             }
         )
     }
@@ -174,7 +149,8 @@ fun DashboardScreen(
             CorporateHeader(
                 totalVehicles = totalVehicles,
                 readyVehicles = readyVehicles,
-                pendingVehicles = pendingVehicles
+                pendingVehicles = pendingVehicles,
+                onOpenTechniciansManager = { showTechniciansManagerModal = true }
             )
         }
 
@@ -185,12 +161,72 @@ fun DashboardScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Text(
-                    text = "Flota Técnica de Guardia",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Flota Técnica de Guardia",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    // Cloud real-time sync pill
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = when (cloudSyncState) {
+                            CloudSyncState.ONLINE_SYNCED -> Color(0xFFDCFCE7)
+                            CloudSyncState.SYNCING -> Color(0xFFFEF3C7)
+                            CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> Color(0xFFF1F5F9)
+                        },
+                        border = androidx.compose.foundation.BorderStroke(
+                            0.8.dp,
+                            when (cloudSyncState) {
+                                CloudSyncState.ONLINE_SYNCED -> Color(0xFF86EFAC)
+                                CloudSyncState.SYNCING -> Color(0xFFFCD34D)
+                                CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> Color(0xFFCBD5E1)
+                            }
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = when (cloudSyncState) {
+                                    CloudSyncState.ONLINE_SYNCED -> Icons.Default.CloudDone
+                                    CloudSyncState.SYNCING -> Icons.Default.Sync
+                                    CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> Icons.Default.CloudOff
+                                },
+                                contentDescription = "Estado de sincronización",
+                                tint = when (cloudSyncState) {
+                                    CloudSyncState.ONLINE_SYNCED -> Color(0xFF166534)
+                                    CloudSyncState.SYNCING -> Color(0xFF92400E)
+                                    CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> Color(0xFF64748B)
+                                },
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = when (cloudSyncState) {
+                                    CloudSyncState.ONLINE_SYNCED -> "En tiempo real"
+                                    CloudSyncState.SYNCING -> "Sincronizando..."
+                                    CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> "Modo local"
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = when (cloudSyncState) {
+                                    CloudSyncState.ONLINE_SYNCED -> Color(0xFF166534)
+                                    CloudSyncState.SYNCING -> Color(0xFF92400E)
+                                    CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> Color(0xFF64748B)
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Selecciona un vehículo para inspeccionar y cuadrar stock",
                     style = MaterialTheme.typography.bodySmall,
@@ -218,9 +254,7 @@ fun DashboardScreen(
                         summary = summary,
                         onClick = {
                             pendingVehicle = summary.vehicle
-                            techNameInput = currentTechName
-                            techNumInput = currentTechNumber
-                            showAuthModal = true
+                            showTechnicianSelectionModal = true
                         }
                     )
                 }
@@ -281,7 +315,8 @@ fun CorporateHeader(
     totalVehicles: Int,
     readyVehicles: Int,
     pendingVehicles: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenTechniciansManager: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -341,16 +376,18 @@ fun CorporateHeader(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-                // Guardia Badge - strictly single line, clear contrast, glowing green indicator
+                // Botón Gestor de Técnicos en la cabecera (chip pill redondeado con indicador verde brillante)
                 Surface(
+                    onClick = onOpenTechniciansManager,
                     shape = RoundedCornerShape(20.dp),
-                    color = Color.Black.copy(alpha = 0.25f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF86EFAC).copy(alpha = 0.6f))
+                    color = Color.Black.copy(alpha = 0.28f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF86EFAC).copy(alpha = 0.75f)),
+                    modifier = Modifier.testTag("header_technicians_manager_button")
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
@@ -358,9 +395,16 @@ fun CorporateHeader(
                                 .size(7.dp)
                                 .background(Color(0xFF4ADE80), CircleShape)
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Default.Group,
+                            contentDescription = "Gestor de Técnicos",
+                            tint = Color.White,
+                            modifier = Modifier.size(13.dp)
+                        )
                         Spacer(modifier = Modifier.width(5.dp))
                         Text(
-                            text = "GUARDIA ACTIVA",
+                            text = "GESTOR TÉCNICOS",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White,

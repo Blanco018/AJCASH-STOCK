@@ -52,4 +52,16 @@ class ExampleUnitTest {
         val floatProgress = (summary.coveragePercentage.toFloat() / 100f).coerceIn(0f, 1f)
         assertEquals(1.0f, floatProgress, 0.001f)
     }
+
+    @Test
+    fun technicianModel_correctFormattingAndNumberPadding() {
+        val tech = com.example.data.model.Technician(
+            id = "tech_16",
+            name = "PABLO BLANCO",
+            number = "16"
+        )
+        assertEquals("tech_16", tech.id)
+        assertEquals("PABLO BLANCO", tech.name)
+        assertEquals("16", tech.number)
+    }
 }

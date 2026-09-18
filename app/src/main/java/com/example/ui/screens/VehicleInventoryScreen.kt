@@ -31,12 +31,16 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
+import com.example.data.remote.CloudSyncState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -103,6 +107,7 @@ fun VehicleInventoryScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val showOnlyAlerts by viewModel.showOnlyAlerts.collectAsStateWithLifecycle()
     val revisions by viewModel.getRevisionsForVehicle(vehicle.id).collectAsStateWithLifecycle(initialValue = emptyList<com.example.data.model.RevisionRecord>())
+    val cloudSyncState by viewModel.cloudSyncState.collectAsStateWithLifecycle()
     var showConfigSheet by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
 
@@ -127,11 +132,28 @@ fun VehicleInventoryScreen(
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
-                        Text(
-                            text = "${vehicle.type} · ${vehicle.plate}",
-                            fontSize = 12.sp,
-                            color = SlateLight
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${vehicle.type} · Matrícula: ${vehicle.plate.replace("-", "")}",
+                                fontSize = 12.sp,
+                                color = SlateLight
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = when (cloudSyncState) {
+                                    CloudSyncState.ONLINE_SYNCED -> Icons.Default.CloudDone
+                                    CloudSyncState.SYNCING -> Icons.Default.Sync
+                                    CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> Icons.Default.CloudOff
+                                },
+                                contentDescription = "Sincronización en tiempo real",
+                                tint = when (cloudSyncState) {
+                                    CloudSyncState.ONLINE_SYNCED -> AjCashGreen
+                                    CloudSyncState.SYNCING -> Color(0xFFF59E0B)
+                                    CloudSyncState.OFFLINE_LOCAL, CloudSyncState.UNCONFIGURED -> SlateLight
+                                },
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
                     }
                 },
                 navigationIcon = {

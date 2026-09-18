@@ -7,20 +7,22 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.model.RevisionRecord
 import com.example.data.model.StockItem
+import com.example.data.model.Technician
 import com.example.data.model.Vehicle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Vehicle::class, StockItem::class, RevisionRecord::class],
-    version = 7,
+    entities = [Vehicle::class, StockItem::class, RevisionRecord::class, Technician::class],
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun vehicleDao(): VehicleDao
     abstract fun stockDao(): StockDao
     abstract fun revisionDao(): RevisionDao
+    abstract fun technicianDao(): TechnicianDao
 
     companion object {
         @Volatile
@@ -188,6 +190,14 @@ abstract class AppDatabase : RoomDatabase() {
                 )
             )
             database.revisionDao().insertRevisions(initialRevisions)
+
+            val initialTechnicians = listOf(
+                Technician(id = "tech_16", name = "PABLO BLANCO", number = "16"),
+                Technician(id = "tech_08", name = "CARLOS MARTÍNEZ", number = "08"),
+                Technician(id = "tech_12", name = "JAVIER SANZ", number = "12"),
+                Technician(id = "tech_15", name = "MARCOS RUBIO", number = "15")
+            )
+            database.technicianDao().insertTechnicians(initialTechnicians)
         }
 
         private data class StockRule(

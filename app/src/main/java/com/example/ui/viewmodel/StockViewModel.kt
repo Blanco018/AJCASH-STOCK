@@ -8,8 +8,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
 import com.example.data.model.RevisionRecord
 import com.example.data.model.StockItem
+import com.example.data.model.Technician
 import com.example.data.model.Vehicle
 import com.example.data.model.VehicleStockSummary
+import com.example.data.remote.CloudSyncState
+import com.example.data.remote.FirestoreSyncService
 import com.example.data.repository.StockRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,11 +37,48 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val database = AppDatabase.getDatabase(application, viewModelScope)
-        repository = StockRepository(database, database.vehicleDao(), database.stockDao())
+        val firestoreService = FirestoreSyncService(application)
+        repository = StockRepository(
+            database = database,
+            vehicleDao = database.vehicleDao(),
+            stockDao = database.stockDao(),
+            firestoreService = firestoreService
+        )
         viewModelScope.launch {
             repository.ensureDatabaseSeeded()
+            repository.startRealtimeCloudSync(viewModelScope)
+        }
+
+        viewModelScope.launch {
+            repository.allTechnicians.collect { list ->
+                if (list.isNotEmpty()) {
+                    val currentSelected = _selectedTechnician.value
+                    if (currentSelected == null || list.none { it.id == currentSelected.id }) {
+                        val preferred = list.find { it.number == "16" || it.name.contains("PABLO", ignoreCase = true) }
+                            ?: list.first()
+                        selectTechnician(preferred)
+                    }
+                }
+            }
         }
     }
+
+    val cloudSyncState: StateFlow<CloudSyncState> = repository.cloudSyncState
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = CloudSyncState.OFFLINE_LOCAL
+        )
+
+    val allTechnicians: StateFlow<List<Technician>> = repository.allTechnicians
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    private val _selectedTechnician = MutableStateFlow<Technician?>(null)
+    val selectedTechnician: StateFlow<Technician?> = _selectedTechnician.asStateFlow()
 
     val vehiclesSummary: StateFlow<List<VehicleStockSummary>> =
         repository.vehiclesWithSummaries
@@ -127,6 +167,46 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         "Red"
     )
 
+    fun selectTechnician(technician: Technician) {
+        _selectedTechnician.value = technician
+        _technicianName.value = technician.name
+        _technicianNumber.value = technician.number
+    }
+
+    fun createTechnician(name: String, number: String, onComplete: ((Boolean, String) -> Unit)? = null) {
+        viewModelScope.launch {
+            val result = repository.addTechnician(name, number)
+            result.onSuccess { tech ->
+                selectTechnician(tech)
+                _userMessage.tryEmit("Técnico '${tech.name} (Nº ${tech.number})' registrado correctamente")
+                onComplete?.invoke(true, "Registrado")
+            }.onFailure { error ->
+                val msg = error.message ?: "Error al registrar técnico"
+                _userMessage.tryEmit(msg)
+                onComplete?.invoke(false, msg)
+            }
+        }
+    }
+
+    fun deleteTechnician(technician: Technician) {
+        viewModelScope.launch {
+            val result = repository.deleteTechnician(technician)
+            result.onSuccess {
+                _userMessage.tryEmit("Técnico '${technician.name}' eliminado")
+                if (_selectedTechnician.value?.id == technician.id) {
+                    val remaining = allTechnicians.value.filter { it.id != technician.id }
+                    if (remaining.isNotEmpty()) {
+                        selectTechnician(remaining.first())
+                    } else {
+                        _selectedTechnician.value = null
+                    }
+                }
+            }.onFailure { error ->
+                _userMessage.tryEmit(error.message ?: "Error al eliminar técnico")
+            }
+        }
+    }
+
     fun setTechnician(name: String, number: String) {
         _technicianName.value = name.trim().uppercase()
         _technicianNumber.value = number.trim()
@@ -141,6 +221,12 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startVehicleInspection(vehicleId: String, name: String, number: String) {
         setTechnician(name, number)
+        selectVehicle(vehicleId)
+        initialStockMap.clear()
+    }
+
+    fun startVehicleInspectionWithTechnician(vehicleId: String, technician: Technician) {
+        selectTechnician(technician)
         selectVehicle(vehicleId)
         initialStockMap.clear()
     }
@@ -204,23 +290,26 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         _showOnlyAlerts.value = !_showOnlyAlerts.value
     }
 
+    private fun currentTechLabel(): String =
+        "${_technicianName.value.ifBlank { "TÉCNICO" }} (#${_technicianNumber.value.ifBlank { "16" }})"
+
     fun incrementQuantity(item: StockItem) {
         viewModelScope.launch {
-            repository.updateQuantity(item.id, item.currentQuantity + 1)
+            repository.updateQuantity(item.id, item.currentQuantity + 1, currentTechLabel())
         }
     }
 
     fun decrementQuantity(item: StockItem) {
         viewModelScope.launch {
             if (item.currentQuantity > 0) {
-                repository.updateQuantity(item.id, item.currentQuantity - 1)
+                repository.updateQuantity(item.id, item.currentQuantity - 1, currentTechLabel())
             }
         }
     }
 
     fun setQuantity(item: StockItem, quantity: Int) {
         viewModelScope.launch {
-            repository.updateQuantity(item.id, quantity.coerceAtLeast(0))
+            repository.updateQuantity(item.id, quantity.coerceAtLeast(0), currentTechLabel())
         }
     }
 
@@ -249,7 +338,8 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 category = category,
                 minimumQuantity = safeMin,
                 initialQuantity = safeQty,
-                unit = unit
+                unit = unit,
+                technicianName = currentTechLabel()
             )
             _userMessage.tryEmit("'$name' añadido al inventario con mínimo de $safeMin $unit")
         }
