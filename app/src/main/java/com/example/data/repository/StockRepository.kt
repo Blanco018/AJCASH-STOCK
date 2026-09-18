@@ -277,21 +277,6 @@ class StockRepository(
             }
         }
 
-        if (technicianDao.getCount() == 0) {
-            val initialTechnicians = listOf(
-                Technician(id = "tech_16", name = "PABLO BLANCO", number = "16"),
-                Technician(id = "tech_08", name = "CARLOS MARTÍNEZ", number = "08"),
-                Technician(id = "tech_12", name = "JAVIER SANZ", number = "12"),
-                Technician(id = "tech_15", name = "MARCOS RUBIO", number = "15")
-            )
-            technicianDao.insertTechnicians(initialTechnicians)
-            firestoreService?.let { service ->
-                for (tech in initialTechnicians) {
-                    service.saveRemoteTechnician(tech)
-                }
-            }
-        }
-
         // Si Firestore está disponible, sincronizar datos iniciales si la colección estuviera vacía
         firestoreService?.let { service ->
             if (service.isAvailable) {

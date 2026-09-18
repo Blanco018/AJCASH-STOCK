@@ -65,6 +65,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,6 +76,10 @@ import com.example.ui.theme.AjCashGreen
 import com.example.ui.theme.AjCashGreenDark
 import com.example.ui.theme.AjCashGreenLight
 import com.example.ui.theme.AjCashGreenSubtle
+import com.example.ui.theme.GreenSlate700
+import com.example.ui.theme.GreenSlate800
+import com.example.ui.theme.GreenSlate900
+import com.example.ui.theme.GreenSlateAccent
 import com.example.ui.theme.SlateBorder
 import com.example.ui.theme.SlateDark
 import com.example.ui.theme.SlateLight
@@ -104,17 +110,20 @@ fun TechniciansManagerDialog(
                 showDeleteConfirmDialog = false
                 techToDelete = null
             },
+            containerColor = GreenSlate900,
+            shape = RoundedCornerShape(20.dp),
             icon = {
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .background(Color(0xFFFEE2E2), CircleShape),
+                        .background(StatusRed.copy(alpha = 0.18f), CircleShape)
+                        .border(1.dp, StatusRed.copy(alpha = 0.4f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = "Alerta de eliminación",
-                        tint = StatusRed,
+                        tint = Color(0xFFF87171),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -124,7 +133,7 @@ fun TechniciansManagerDialog(
                     text = "Confirmar Eliminación",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = SlateDark
+                    color = Color.White
                 )
             },
             text = {
@@ -132,13 +141,13 @@ fun TechniciansManagerDialog(
                     Text(
                         text = "¿Estás seguro de que deseas eliminar al técnico ${target.name} (Nº ${target.number})?",
                         fontSize = 14.sp,
-                        color = SlateMedium
+                        color = Color.White.copy(alpha = 0.9f)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "El técnico será retirado del listado oficial de guardia y no aparecerá en los selectores de vehículos.",
                         fontSize = 12.sp,
-                        color = SlateLight
+                        color = GreenSlateAccent.copy(alpha = 0.8f)
                     )
                 }
             },
@@ -150,9 +159,10 @@ fun TechniciansManagerDialog(
                         techToDelete = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = StatusRed),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.testTag("confirm_delete_tech_button")
                 ) {
-                    Text("Eliminar Técnico", fontWeight = FontWeight.Bold)
+                    Text("Eliminar Técnico", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             },
             dismissButton = {
@@ -163,7 +173,7 @@ fun TechniciansManagerDialog(
                     },
                     modifier = Modifier.testTag("cancel_delete_tech_button")
                 ) {
-                    Text("Cancelar", color = SlateMedium)
+                    Text("Cancelar", color = Color.White.copy(alpha = 0.75f))
                 }
             }
         )
@@ -171,6 +181,8 @@ fun TechniciansManagerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = GreenSlate900,
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth(0.95f),
         title = {
             Row(
@@ -179,29 +191,31 @@ fun TechniciansManagerDialog(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
-                        .background(AjCashGreenLight, CircleShape),
+                        .size(40.dp)
+                        .background(GreenSlate800, CircleShape)
+                        .border(1.dp, GreenSlate700, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Group,
                         contentDescription = null,
-                        tint = AjCashGreen,
+                        tint = GreenSlateAccent,
                         modifier = Modifier.size(22.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = "GESTOR DE TÉCNICOS",
                         fontWeight = FontWeight.Black,
                         fontSize = 17.sp,
-                        color = AjCashGreen
+                        color = GreenSlateAccent,
+                        letterSpacing = 0.5.sp
                     )
                     Text(
                         text = "Plantilla de Guardia AJ CA\$H (${technicians.size} activos)",
                         fontSize = 12.sp,
-                        color = SlateLight
+                        color = Color.White.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -211,23 +225,34 @@ fun TechniciansManagerDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Formulario de Alta de Nuevo Técnico
+                // Formulario de Alta de Nuevo Técnico - Recuadro Verde Pizarra Oscuro
                 Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = AjCashGreenSubtle),
-                    border = BorderStroke(1.dp, AjCashGreenLight),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = GreenSlate800),
+                    border = BorderStroke(1.dp, GreenSlate700),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(
-                            text = "Añadir Nuevo Técnico",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = AjCashGreenDark
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                tint = GreenSlateAccent,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Añadir Nuevo Técnico",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = GreenSlateAccent
+                            )
+                        }
 
                         OutlinedTextField(
                             value = newTechName,
@@ -240,9 +265,19 @@ fun TechniciansManagerDialog(
                                 imeAction = ImeAction.Next
                             ),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AjCashGreen,
-                                focusedLabelColor = AjCashGreen
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedContainerColor = GreenSlate900,
+                                unfocusedContainerColor = GreenSlate900,
+                                focusedBorderColor = GreenSlateAccent,
+                                unfocusedBorderColor = GreenSlate700,
+                                focusedLabelColor = GreenSlateAccent,
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                                focusedPlaceholderColor = Color.White.copy(alpha = 0.4f),
+                                unfocusedPlaceholderColor = Color.White.copy(alpha = 0.3f),
+                                cursorColor = GreenSlateAccent
                             ),
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("new_tech_name_input")
@@ -251,7 +286,7 @@ fun TechniciansManagerDialog(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             OutlinedTextField(
                                 value = newTechNumber,
@@ -275,78 +310,149 @@ fun TechniciansManagerDialog(
                                     }
                                 ),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = AjCashGreen,
-                                    focusedLabelColor = AjCashGreen
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedContainerColor = GreenSlate900,
+                                    unfocusedContainerColor = GreenSlate900,
+                                    focusedBorderColor = GreenSlateAccent,
+                                    unfocusedBorderColor = GreenSlate700,
+                                    focusedLabelColor = GreenSlateAccent,
+                                    unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                                    focusedPlaceholderColor = Color.White.copy(alpha = 0.4f),
+                                    unfocusedPlaceholderColor = Color.White.copy(alpha = 0.3f),
+                                    cursorColor = GreenSlateAccent
                                 ),
+                                shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier
                                     .weight(1f)
                                     .testTag("new_tech_number_input")
                             )
 
+                            val canAdd = newTechName.isNotBlank() && newTechNumber.isNotBlank()
                             Button(
                                 onClick = {
-                                    if (newTechName.isNotBlank() && newTechNumber.isNotBlank()) {
+                                    if (canAdd) {
                                         onAddTechnician(newTechName, newTechNumber)
                                         newTechName = ""
                                         newTechNumber = ""
                                     }
                                 },
-                                enabled = newTechName.isNotBlank() && newTechNumber.isNotBlank(),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
+                                enabled = canAdd,
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = AjCashGreen,
+                                    contentColor = Color.White,
+                                    disabledContainerColor = GreenSlate700.copy(alpha = 0.6f),
+                                    disabledContentColor = Color.White.copy(alpha = 0.35f)
+                                ),
                                 modifier = Modifier
-                                    .height(52.dp)
+                                    .height(54.dp)
                                     .testTag("submit_add_tech_button")
                             ) {
-                                Icon(imageVector = Icons.Default.PersonAdd, contentDescription = null)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Añadir", fontWeight = FontWeight.Bold)
+                                Icon(
+                                    imageVector = Icons.Default.PersonAdd,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Añadir", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
                         }
                     }
                 }
 
-                HorizontalDivider(color = SlateBorder)
+                HorizontalDivider(color = GreenSlate700.copy(alpha = 0.8f))
 
                 // Listado de Técnicos Existentes
-                Text(
-                    text = "Técnicos Registrados",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = SlateDark
-                )
-
-                if (technicians.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 18.dp),
-                        contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "TÉCNICOS REGISTRADOS",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        letterSpacing = 0.8.sp,
+                        color = GreenSlateAccent
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = GreenSlate700,
+                        border = BorderStroke(1.dp, GreenSlateAccent.copy(alpha = 0.3f))
                     ) {
                         Text(
-                            text = "No hay técnicos registrados. Añade uno arriba.",
-                            color = SlateLight,
-                            fontSize = 13.sp
+                            text = "${technicians.size} activos",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
+                    }
+                }
+
+                if (technicians.isEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = GreenSlate800,
+                        border = BorderStroke(1.dp, GreenSlate700),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp, horizontal = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .background(GreenSlate700, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Group,
+                                    contentDescription = null,
+                                    tint = GreenSlateAccent.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "No hay técnicos registrados",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Añade técnicos de guardia usando el formulario superior.",
+                                fontSize = 12.sp,
+                                color = Color.White.copy(alpha = 0.65f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 } else {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = 240.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(technicians, key = { it.id }) { tech ->
+                            // Recuadros de técnicos en Verde Oscuro Elegante (¡Cero blanco!)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color.White,
-                                border = BorderStroke(1.dp, SlateBorder),
+                                shape = RoundedCornerShape(12.dp),
+                                color = GreenSlate800,
+                                border = BorderStroke(1.dp, GreenSlate700),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
@@ -354,52 +460,60 @@ fun TechniciansManagerDialog(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        // Badge con número
+                                        // Badge con número en verde brillante
                                         Box(
                                             modifier = Modifier
-                                                .size(32.dp)
-                                                .background(AjCashGreenLight, CircleShape),
+                                                .size(34.dp)
+                                                .background(GreenSlate700, CircleShape)
+                                                .border(1.dp, GreenSlateAccent.copy(alpha = 0.5f), CircleShape),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
                                                 text = "#${tech.number}",
                                                 fontWeight = FontWeight.Black,
                                                 fontSize = 11.sp,
-                                                color = AjCashGreenDark
+                                                color = GreenSlateAccent
                                             )
                                         }
-                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
                                                 text = tech.name,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp,
-                                                color = SlateDark,
+                                                color = Color.White,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
                                             Text(
                                                 text = "Técnico de Guardia",
                                                 fontSize = 11.sp,
-                                                color = SlateLight
+                                                color = GreenSlateAccent.copy(alpha = 0.7f)
                                             )
                                         }
                                     }
 
                                     // Botón de eliminar con confirmación obligatoria
-                                    IconButton(
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = StatusRed.copy(alpha = 0.14f),
+                                        border = BorderStroke(1.dp, StatusRed.copy(alpha = 0.35f)),
                                         onClick = {
                                             techToDelete = tech
                                             showDeleteConfirmDialog = true
                                         },
-                                        modifier = Modifier.testTag("delete_tech_button_${tech.id}")
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .testTag("delete_tech_button_${tech.id}")
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.DeleteOutline,
-                                            contentDescription = "Eliminar a ${tech.name}",
-                                            tint = StatusRed.copy(alpha = 0.8f),
-                                            modifier = Modifier.size(20.dp)
-                                        )
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.DeleteOutline,
+                                                contentDescription = "Eliminar a ${tech.name}",
+                                                tint = Color(0xFFF87171),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -412,9 +526,19 @@ fun TechniciansManagerDialog(
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
-                modifier = Modifier.testTag("close_technicians_manager_button")
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .testTag("close_technicians_manager_button")
             ) {
-                Text("Listo", fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Listo", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
             }
         }
     )
@@ -443,35 +567,39 @@ fun TechnicianSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = GreenSlate900,
+        shape = RoundedCornerShape(20.dp),
         title = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(34.dp)
-                            .background(AjCashGreenLight, CircleShape),
+                            .size(36.dp)
+                            .background(GreenSlate800, CircleShape)
+                            .border(1.dp, GreenSlate700, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Engineering,
                             contentDescription = null,
-                            tint = AjCashGreen,
+                            tint = GreenSlateAccent,
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "TÉCNICO DE GUARDIA",
                         fontWeight = FontWeight.Black,
                         fontSize = 17.sp,
-                        color = AjCashGreen
+                        color = GreenSlateAccent,
+                        letterSpacing = 0.5.sp
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Asignación para ${vehicle.name} · Matrícula: ${vehicle.plate.replace("-", "")}",
                     fontSize = 12.sp,
-                    color = SlateLight
+                    color = Color.White.copy(alpha = 0.7f)
                 )
             }
         },
@@ -480,26 +608,26 @@ fun TechnicianSelectionDialog(
                 Text(
                     text = "Selecciona el técnico responsable que registrará las revisiones y movimientos de stock en este turno:",
                     fontSize = 13.sp,
-                    color = SlateDark
+                    color = Color.White.copy(alpha = 0.85f)
                 )
 
                 if (technicians.isEmpty()) {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
-                        border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
-                        shape = RoundedCornerShape(8.dp)
+                        colors = CardDefaults.cardColors(containerColor = GreenSlate800),
+                        border = BorderStroke(1.dp, StatusRed.copy(alpha = 0.4f)),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
                             Text(
                                 text = "No hay técnicos disponibles en la lista.",
                                 fontWeight = FontWeight.Bold,
-                                color = StatusRed,
+                                color = Color(0xFFF87171),
                                 fontSize = 13.sp
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Pulsa en el botón inferior para registrar al primer técnico de guardia.",
-                                color = SlateMedium,
+                                color = Color.White.copy(alpha = 0.7f),
                                 fontSize = 12.sp
                             )
                         }
@@ -523,13 +651,20 @@ fun TechnicianSelectionDialog(
                                 Icon(
                                     imageVector = Icons.Default.Badge,
                                     contentDescription = null,
-                                    tint = AjCashGreen
+                                    tint = GreenSlateAccent
                                 )
                             },
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AjCashGreen,
-                                focusedLabelColor = AjCashGreen
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedContainerColor = GreenSlate800,
+                                unfocusedContainerColor = GreenSlate800,
+                                focusedBorderColor = GreenSlateAccent,
+                                unfocusedBorderColor = GreenSlate700,
+                                focusedLabelColor = GreenSlateAccent,
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.7f)
                             ),
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier
                                 .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                                 .fillMaxWidth()
@@ -538,7 +673,8 @@ fun TechnicianSelectionDialog(
 
                         ExposedDropdownMenu(
                             expanded = expanded,
-                            onDismissRequest = { expanded = false }
+                            onDismissRequest = { expanded = false },
+                            containerColor = GreenSlate800
                         ) {
                             technicians.forEach { tech ->
                                 val isSelected = currentChoice?.id == tech.id
@@ -552,9 +688,14 @@ fun TechnicianSelectionDialog(
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(26.dp)
+                                                        .size(28.dp)
                                                         .background(
-                                                            if (isSelected) AjCashGreen else AjCashGreenLight,
+                                                            if (isSelected) AjCashGreen else GreenSlate700,
+                                                            CircleShape
+                                                        )
+                                                        .border(
+                                                            1.dp,
+                                                            if (isSelected) GreenSlateAccent else GreenSlate700,
                                                             CircleShape
                                                         ),
                                                     contentAlignment = Alignment.Center
@@ -563,21 +704,21 @@ fun TechnicianSelectionDialog(
                                                         text = "#${tech.number}",
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.Bold,
-                                                        color = if (isSelected) Color.White else AjCashGreenDark
+                                                        color = if (isSelected) Color.White else GreenSlateAccent
                                                     )
                                                 }
                                                 Spacer(modifier = Modifier.width(10.dp))
                                                 Text(
                                                     text = tech.name,
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                    color = if (isSelected) AjCashGreen else SlateDark
+                                                    color = if (isSelected) GreenSlateAccent else Color.White
                                                 )
                                             }
                                             if (isSelected) {
                                                 Icon(
                                                     imageVector = Icons.Default.Check,
                                                     contentDescription = "Seleccionado",
-                                                    tint = AjCashGreen,
+                                                    tint = GreenSlateAccent,
                                                     modifier = Modifier.size(18.dp)
                                                 )
                                             }
@@ -598,9 +739,9 @@ fun TechnicianSelectionDialog(
                 // Botón de acceso directo al Gestor de Técnicos
                 OutlinedButton(
                     onClick = onOpenManager,
-                    border = BorderStroke(1.dp, AjCashGreen),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AjCashGreen),
-                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, GreenSlateAccent.copy(alpha = 0.5f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenSlateAccent),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("open_technicians_manager_from_dialog_button")
@@ -610,7 +751,7 @@ fun TechnicianSelectionDialog(
                         contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Gestor de Técnicos (Añadir / Eliminar)",
                         fontSize = 12.sp,
@@ -628,9 +769,10 @@ fun TechnicianSelectionDialog(
                 },
                 enabled = currentChoice != null,
                 colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
+                shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.testTag("submit_tech_auth_button")
             ) {
-                Text("Acceder al Inventario", fontWeight = FontWeight.Bold)
+                Text("Acceder al Inventario", fontWeight = FontWeight.Bold, color = Color.White)
             }
         },
         dismissButton = {
@@ -638,7 +780,7 @@ fun TechnicianSelectionDialog(
                 onClick = onDismiss,
                 modifier = Modifier.testTag("cancel_tech_auth_button")
             ) {
-                Text("Cancelar", color = SlateMedium)
+                Text("Cancelar", color = Color.White.copy(alpha = 0.75f))
             }
         }
     )

@@ -193,18 +193,18 @@ Para activar la conexión con Firebase en un nuevo entorno:
    - Entidad Room: `Technician` (`id`, `name`, `number`) con clave primaria `id`.
    - DAO: `TechnicianDao` con soporte reactivo `Flow<List<Technician>>`.
    - Colección Firestore sincronizada: `/technicians/{techId}`.
-   - Técnicos iniciales precargados (seeding):
-     * PABLO BLANCO (Nº 16)
-     * CARLOS MARTÍNEZ (Nº 08)
-     * JAVIER SANZ (Nº 12)
-     * MARCOS RUBIO (Nº 15)
+   - Lista inicial vacía (`emptyList()`): La app no precarga técnicos por defecto, permitiendo que
+     la plantilla se gestione limpiamente según las necesidades reales del servicio.
+   - Si no hay técnicos, se muestra el estado vacío informativo: "No hay técnicos registrados. Añade uno arriba.".
 
 2. Gestor de Técnicos (`TechniciansManagerDialog`):
    - Accesible exclusivamente mediante el botón de estilo píldora "GESTOR TÉCNICOS" en la cabecera superior
      derecha (Top Bar), o desde el diálogo de selección de vehículos.
    - Diseño limpio y directo: Se eliminó la tarjeta central redundante para maximizar el área visible
      de la flota técnica y evitar elementos visuales recargados.
-   - Creación de técnicos: Formulario con campos "Nombre y Apellidos" (mayúsculas) y "Nº de Técnico".
+   - Creación de técnicos: Formulario con campos "Nombre y Apellidos" (mayúsculas) y "Nº de Técnico"
+     con fondo verde oscuro (`GreenSlate800`), texto blanco de alto contraste (`Color.White`) y
+     bordes resaltados en verde corporativo (`GreenSlateAccent`) para máxima legibilidad.
    - Eliminación con confirmación obligatoria: Todo intento de borrado dispara un
      `AlertDialog` de confirmación explícita (ej. "¿Estás seguro de que deseas eliminar al técnico [Nombre]?")
      para prevenir accidentes operativos durante una guardia.

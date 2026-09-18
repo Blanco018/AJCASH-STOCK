@@ -191,13 +191,7 @@ abstract class AppDatabase : RoomDatabase() {
             )
             database.revisionDao().insertRevisions(initialRevisions)
 
-            val initialTechnicians = listOf(
-                Technician(id = "tech_16", name = "PABLO BLANCO", number = "16"),
-                Technician(id = "tech_08", name = "CARLOS MARTÍNEZ", number = "08"),
-                Technician(id = "tech_12", name = "JAVIER SANZ", number = "12"),
-                Technician(id = "tech_15", name = "MARCOS RUBIO", number = "15")
-            )
-            database.technicianDao().insertTechnicians(initialTechnicians)
+            // La lista de técnicos se inicia vacía por requerimiento del usuario
         }
 
         private data class StockRule(
