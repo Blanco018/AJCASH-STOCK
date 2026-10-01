@@ -1,31 +1,31 @@
 /**
  * Page / Screen Object para la pantalla Dashboard inicial de AJCashStocks.
- * Utiliza selectores directos por Resource-ID de Android / UiSelector para máxima velocidad y certeza.
+ * Selectores robustos compatibles con UiSelector, Resource-ID, Content-Desc y Text.
  */
 export class DashboardScreen {
     /**
-     * Selector del contenedor principal del Dashboard por Resource ID
+     * Selector del contenedor principal del Dashboard
      */
     get dashboardRoot() {
-        return $('android=new UiSelector().resourceIdMatches(".*dashboard_screen.*")');
+        return $('//*[contains(@resource-id, "dashboard_screen") or @content-desc="dashboard_screen"]');
     }
 
     /**
      * Botón Gestor de Técnicos en la cabecera
      */
     get headerTechManagerBtn() {
-        return $('android=new UiSelector().resourceIdMatches(".*header_technicians_manager_button.*")');
+        return $('//*[contains(@resource-id, "header_technicians_manager_button") or contains(@text, "GESTOR TÉCNICOS")]');
     }
 
     /**
-     * Input de Nombre y Apellidos (primer campo de texto dentro del gestor)
+     * Input de Nombre y Apellidos (primer campo de texto dentro del modal)
      */
     get newTechNameInput() {
         return $('android=new UiSelector().className("android.widget.EditText").instance(0)');
     }
 
     /**
-     * Input de Número de técnico (segundo campo de texto dentro del gestor)
+     * Input de Número de técnico (segundo campo de texto dentro del modal)
      */
     get newTechNumberInput() {
         return $('android=new UiSelector().className("android.widget.EditText").instance(1)');
@@ -35,28 +35,28 @@ export class DashboardScreen {
      * Botón Añadir Técnico
      */
     get submitAddTechBtn() {
-        return $('android=new UiSelector().textContains("Añadir")');
+        return $('//*[contains(@resource-id, "submit_add_tech_button") or @content-desc="submit_add_tech_button" or contains(@text, "Añadir")]');
     }
 
     /**
      * Botón Listo / Cerrar Gestor
      */
     get closeTechManagerBtn() {
-        return $('android=new UiSelector().textContains("Listo")');
+        return $('//*[contains(@resource-id, "close_technicians_manager_button") or @content-desc="close_technicians_manager_button" or contains(@text, "Listo")]');
     }
 
     /**
      * Selector de la tarjeta del vehículo de la flota
      */
     get firstVehicleCard() {
-        return $('android=new UiSelector().resourceIdMatches(".*vehicle_card_.*")');
+        return $('//*[contains(@resource-id, "vehicle_card_") or contains(@text, "Coche 1") or contains(@text, "Furgoneta 1")]');
     }
 
     /**
      * Botón de confirmación / asignación del Técnico de Guardia en el diálogo
      */
     get submitTechAuthButton() {
-        return $('android=new UiSelector().resourceIdMatches(".*submit_tech_auth_button.*")');
+        return $('//*[contains(@resource-id, "submit_tech_auth_button") or contains(@text, "Acceder al Inventario")]');
     }
 
     /**
@@ -71,29 +71,54 @@ export class DashboardScreen {
      * Abre el Gestor de Técnicos de la cabecera, registra al técnico y cierra el modal
      */
     async createTechnician(name: string, number: string): Promise<void> {
+        // 1. Abrir modal del gestor
         await this.headerTechManagerBtn.waitForDisplayed({ timeout: 10000 });
         await this.headerTechManagerBtn.click();
         await driver.pause(1000);
 
-        // Rellenar Nombre y Apellidos
+        // 2. Rellenar Nombre
         await this.newTechNameInput.waitForDisplayed({ timeout: 10000 });
+        await this.newTechNameInput.click();
+        await driver.pause(300);
         await this.newTechNameInput.setValue(name);
         await driver.pause(500);
 
-        // Rellenar Nº de Técnico
+        // 3. Rellenar Número
         await this.newTechNumberInput.waitForDisplayed({ timeout: 10000 });
+        await this.newTechNumberInput.click();
+        await driver.pause(300);
         await this.newTechNumberInput.setValue(number);
         await driver.pause(500);
 
-        // Pulsar Añadir
+        // 4. Ocultar teclado para dejar los botones totalmente visibles y accesibles
+        try {
+            if (await driver.isKeyboardShown()) {
+                await driver.hideKeyboard();
+                await driver.pause(500);
+            }
+        } catch {
+            // Teclado cerrado
+        }
+
+        // 5. Pulsar "Añadir"
         await this.submitAddTechBtn.waitForDisplayed({ timeout: 10000 });
         await this.submitAddTechBtn.click();
-        await driver.pause(1000);
+        await driver.pause(1200);
 
-        // Cerrar Gestor con Listo
+        // 6. Asegurar que el teclado no tape el botón "Listo"
+        try {
+            if (await driver.isKeyboardShown()) {
+                await driver.hideKeyboard();
+                await driver.pause(500);
+            }
+        } catch {
+            // Teclado cerrado
+        }
+
+        // 7. Pulsar "Listo" para cerrar el gestor
         await this.closeTechManagerBtn.waitForDisplayed({ timeout: 10000 });
         await this.closeTechManagerBtn.click();
-        await driver.pause(1000);
+        await driver.pause(1200);
     }
 
     /**
@@ -102,9 +127,9 @@ export class DashboardScreen {
     async enterVehicleInventory(): Promise<void> {
         await this.firstVehicleCard.waitForDisplayed({ timeout: 10000 });
         await this.firstVehicleCard.click();
-        await driver.pause(800);
+        await driver.pause(1000);
 
-        // Espera a que aparezca el diálogo modal y confirma
+        // Espera a que aparezca el diálogo modal y pulsa Acceder al Inventario
         await this.submitTechAuthButton.waitForDisplayed({ timeout: 10000 });
         await this.submitTechAuthButton.click();
         await driver.pause(1000);

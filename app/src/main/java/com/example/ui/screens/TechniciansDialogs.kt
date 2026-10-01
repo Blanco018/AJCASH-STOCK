@@ -62,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
@@ -354,6 +355,7 @@ fun TechniciansManagerDialog(
                                 modifier = Modifier
                                     .height(54.dp)
                                     .testTag("submit_add_tech_button")
+                                    .semantics { contentDescription = "submit_add_tech_button" }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.PersonAdd,
@@ -537,6 +539,7 @@ fun TechniciansManagerDialog(
                     .fillMaxWidth()
                     .height(48.dp)
                     .testTag("close_technicians_manager_button")
+                    .semantics { contentDescription = "close_technicians_manager_button" }
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
