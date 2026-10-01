@@ -8,16 +8,25 @@ describe('AJCashStocks - Mobile Automation Suite (Appium + WebdriverIO)', () => 
         expect(isDashboardVisible).toBe(true);
     });
 
-    it('TC02: Debe ingresar al inventario del vehículo tras autorizar al técnico de guardia', async () => {
-        // Seleccionar vehículo y confirmar acceso con el técnico de guardia preasignado (PABLO BLANCO Nº 16)
-        await DashboardScreen.enterVan1Inventory();
+    it('TC02: Debe abrir el Gestor y registrar al técnico de guardia "PABLO BLANCO (Nº 16)"', async () => {
+        // Abrir Gestor de Técnicos, registrar a Pablo Blanco y cerrar
+        await DashboardScreen.createTechnician('PABLO BLANCO', '16');
+
+        // Confirmar que el Dashboard sigue visible
+        const isDashboardBack = await DashboardScreen.isDisplayed();
+        expect(isDashboardBack).toBe(true);
+    });
+
+    it('TC03: Debe ingresar al inventario del vehículo tras autorizar al técnico', async () => {
+        // Seleccionar vehículo y confirmar acceso con el técnico de guardia
+        await DashboardScreen.enterVehicleInventory();
 
         // Validar que la vista de inventario del vehículo está activa
         const isInventoryVisible = await InventoryScreen.isDisplayed();
         expect(isInventoryVisible).toBe(true);
     });
 
-    it('TC03: Debe filtrar el catálogo de repuestos al buscar "TPV"', async () => {
+    it('TC04: Debe filtrar el catálogo de repuestos al buscar "TPV"', async () => {
         // Buscar el término TPV
         await InventoryScreen.searchProduct('TPV');
 
@@ -28,7 +37,7 @@ describe('AJCashStocks - Mobile Automation Suite (Appium + WebdriverIO)', () => 
         expect(isTpvDisplayed).toBe(true);
     });
 
-    it('TC04: Debe volver al Dashboard principal al pulsar el botón Atrás', async () => {
+    it('TC05: Debe volver al Dashboard principal al pulsar el botón Atrás', async () => {
         // Presionar botón Atrás
         await InventoryScreen.clickBack();
 
@@ -37,4 +46,3 @@ describe('AJCashStocks - Mobile Automation Suite (Appium + WebdriverIO)', () => 
         expect(isDashboardBack).toBe(true);
     });
 });
-

@@ -93,6 +93,7 @@ import com.example.ui.theme.StatusRed
  * Diálogo interactivo para el Gestor de Técnicos de Guardia.
  * Permite registrar nuevos técnicos y eliminar los existentes, requiriendo confirmación explícita.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TechniciansManagerDialog(
     technicians: List<Technician>,
@@ -186,7 +187,9 @@ fun TechniciansManagerDialog(
         onDismissRequest = onDismiss,
         containerColor = GreenSlate900,
         shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth(0.95f),
+        modifier = Modifier
+            .fillMaxWidth(0.95f)
+            .semantics { testTagsAsResourceId = true },
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
