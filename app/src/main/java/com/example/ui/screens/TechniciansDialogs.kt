@@ -352,7 +352,6 @@ fun TechniciansManagerDialog(
                                 .fillMaxWidth()
                                 .height(50.dp)
                                 .testTag("submit_add_tech_button")
-                                .semantics { contentDescription = "submit_add_tech_button" }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.PersonAdd,
@@ -535,7 +534,6 @@ fun TechniciansManagerDialog(
                     .fillMaxWidth()
                     .height(48.dp)
                     .testTag("close_technicians_manager_button")
-                    .semantics { contentDescription = "close_technicians_manager_button" }
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,

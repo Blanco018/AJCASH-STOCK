@@ -1,6 +1,6 @@
 /**
  * Page / Screen Object para la pantalla Dashboard inicial de AJCashStocks.
- * Selectores directos por Accessibility ID (~), Resource-ID y texto nativo.
+ * Selectores directos mediante XPath y UiSelector nativo.
  */
 export class DashboardScreen {
     /**
@@ -14,7 +14,7 @@ export class DashboardScreen {
      * Botón Gestor de Técnicos en la cabecera
      */
     get headerTechManagerBtn() {
-        return $('//*[contains(@resource-id, "header_technicians_manager_button") or contains(@text, "GESTOR TÉCNICOS")]');
+        return $('//*[@text="GESTOR TÉCNICOS" or contains(@resource-id, "header_technicians_manager_button")]');
     }
 
     /**
@@ -32,17 +32,17 @@ export class DashboardScreen {
     }
 
     /**
-     * Botón Añadir Técnico
+     * Botón Añadir Técnico por XPath
      */
     get submitAddTechBtn() {
-        return $('//*[contains(@resource-id, "submit_add_tech_button") or @content-desc="submit_add_tech_button" or @text="Añadir" or contains(@text, "Añadir")]');
+        return $('//*[@text="Añadir" or contains(@text, "Añadir") or contains(@resource-id, "submit_add_tech_button")]');
     }
 
     /**
-     * Botón Listo / Cerrar Gestor
+     * Botón Listo / Cerrar Gestor por XPath
      */
     get closeTechManagerBtn() {
-        return $('//*[contains(@resource-id, "close_technicians_manager_button") or @content-desc="close_technicians_manager_button" or @text="Listo" or contains(@text, "Listo")]');
+        return $('//*[@text="Listo" or contains(@text, "Listo") or contains(@resource-id, "close_technicians_manager_button")]');
     }
 
     /**
@@ -86,26 +86,35 @@ export class DashboardScreen {
         await this.newTechNumberInput.setValue(number);
         await driver.pause(400);
 
-        // 4. Ocultar teclado (o tocar el título para quitar el foco del input)
+        // 4. Disparo inmediato vía acción de teclado IME Done (Enter)
         try {
-            await driver.hideKeyboard();
+            await driver.pressKeyCode(66); // KEYCODE_ENTER
+            await driver.pause(600);
         } catch {
-            try {
-                const titleNode = await $('android=new UiSelector().textContains("Gestor de Técnicos")');
-                await titleNode.click();
-            } catch {}
+            // Continuar
         }
-        await driver.pause(600);
 
-        // 5. Pulsar "Añadir"
-        await this.submitAddTechBtn.waitForDisplayed({ timeout: 10000 });
-        await this.submitAddTechBtn.click();
-        await driver.pause(1000);
+        // 5. Clic directo por XPath al botón Añadir
+        try {
+            const addBtn = await $('//*[@text="Añadir" or contains(@text, "Añadir")]');
+            await addBtn.waitForDisplayed({ timeout: 4000 });
+            await addBtn.click();
+            await driver.pause(800);
+        } catch {
+            // Ya registrado mediante IME Done
+        }
 
-        // 6. Pulsar "Listo"
-        await this.closeTechManagerBtn.waitForDisplayed({ timeout: 10000 });
-        await this.closeTechManagerBtn.click();
-        await driver.pause(1000);
+        // 6. Clic directo por XPath al botón Listo
+        try {
+            const closeBtn = await $('//*[@text="Listo" or contains(@text, "Listo")]');
+            await closeBtn.waitForDisplayed({ timeout: 5000 });
+            await closeBtn.click();
+            await driver.pause(1000);
+        } catch {
+            const fallbackClose = await $('android=new UiSelector().textContains("Listo")');
+            await fallbackClose.click();
+            await driver.pause(1000);
+        }
     }
 
     /**
