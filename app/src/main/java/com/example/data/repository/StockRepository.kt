@@ -39,6 +39,24 @@ class StockRepository(
 
     val allTechnicians: Flow<List<Technician>> = technicianDao.getAllTechnicians()
 
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                if (technicianDao.getCount() == 0) {
+                    technicianDao.insertTechnician(
+                        Technician(
+                            id = "tech_pablo_blanco",
+                            name = "PABLO BLANCO",
+                            number = "16"
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("StockRepository", "Error ensuring default technician", e)
+            }
+        }
+    }
+
     val vehiclesWithSummaries: Flow<List<VehicleStockSummary>> =
         combine(
             vehicleDao.getAllVehicles(),

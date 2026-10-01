@@ -155,9 +155,16 @@ abstract class AppDatabase : RoomDatabase() {
 
             database.stockDao().insertStockItems(stockItems)
 
-            // Por requerimiento del usuario:
-            // 1. Historial de revisiones completamente vacío al inicio (emptyList())
-            // 2. Lista de técnicos vacía
+            // Técnico inicial de guardia por defecto
+            database.technicianDao().insertTechnicians(
+                listOf(
+                    Technician(
+                        id = "tech_pablo_blanco",
+                        name = "PABLO BLANCO",
+                        number = "16"
+                    )
+                )
+            )
         }
 
         private data class StockRule(

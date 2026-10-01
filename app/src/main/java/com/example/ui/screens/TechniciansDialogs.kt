@@ -57,10 +57,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -549,7 +552,7 @@ fun TechniciansManagerDialog(
  * Contiene un menú desplegable (ExposedDropdownMenuBox) con los técnicos registrados
  * y un acceso directo para abrir el Gestor si se requiere dar de alta a otro técnico.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TechnicianSelectionDialog(
     vehicle: Vehicle,
@@ -567,6 +570,7 @@ fun TechnicianSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.semantics { testTagsAsResourceId = true },
         containerColor = GreenSlate900,
         shape = RoundedCornerShape(20.dp),
         title = {

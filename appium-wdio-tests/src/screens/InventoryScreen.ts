@@ -1,33 +1,34 @@
 /**
  * Page / Screen Object para la pantalla de Inventario de Vehículo en AJCashStocks.
+ * Utiliza selectores directos por Resource-ID de Android / UiSelector para máxima velocidad y certeza.
  */
 export class InventoryScreen {
     /**
-     * Contenedor de la pantalla de inventario
+     * Contenedor de la pantalla de inventario por Resource ID
      */
     get inventoryRoot() {
-        return $('//*[contains(@resource-id, "vehicle_inventory_screen") or contains(@text, "Revisión") or contains(@text, "Coche 1") or contains(@text, "Furgoneta 1") or contains(@text, "Matrícula")]');
+        return $('android=new UiSelector().resourceIdMatches(".*vehicle_inventory_screen.*")');
     }
 
     /**
-     * Campo de entrada de texto para búsqueda de repuestos
+     * Campo de entrada de texto para búsqueda de repuestos por Resource ID
      */
     get searchInput() {
-        return $('//*[contains(@resource-id, "search_input") or contains(@text, "Buscar producto") or contains(@text, "Buscar")]');
+        return $('android=new UiSelector().resourceIdMatches(".*search_input.*")');
     }
 
     /**
-     * Botón de navegación Atrás
+     * Botón de navegación Atrás por Resource ID
      */
     get backButton() {
-        return $('//*[contains(@resource-id, "back_button") or @content-desc="Volver al listado de vehículos" or contains(@content-desc, "Volver")]');
+        return $('android=new UiSelector().resourceIdMatches(".*back_button.*")');
     }
 
     /**
      * Localizador dinámico por texto de producto
      */
     getProductNode(productName: string) {
-        return $(`//*[contains(@text, "${productName}")]`);
+        return $(`android=new UiSelector().textContains("${productName}")`);
     }
 
     /**
@@ -43,10 +44,11 @@ export class InventoryScreen {
      */
     async searchProduct(query: string): Promise<void> {
         try {
-            await this.searchInput.waitForDisplayed({ timeout: 6000 });
+            await this.searchInput.waitForDisplayed({ timeout: 5000 });
         } catch {
             try {
-                await $('android=new UiScrollable(new UiSelector().scrollable(true)).scrollForward()');
+                // Scroll asistido por UiScrollable si la caja estuviera bajo el pliegue
+                await $('android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().resourceIdMatches(".*search_input.*"))');
             } catch {
                 // Continuar
             }
