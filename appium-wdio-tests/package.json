@@ -4,6 +4,7 @@
   "description": "Suite de automatización E2E con WebdriverIO, Appium y TypeScript para AJCashStocks",
   "main": "index.js",
   "scripts": {
+    "appium:start": "appium --relaxed-security",
     "test:appium": "wdio run wdio.conf.ts",
     "appium:doctor": "appium-doctor --android",
     "build": "tsc"

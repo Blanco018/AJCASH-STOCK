@@ -49,17 +49,9 @@ export const config: Options.Testrunner = {
     connectionRetryTimeout: 120000,
     connectionRetryCount: 3,
 
-    // Servicio Appium (levanta el servidor automáticamente)
-    services: [
-        ['appium', {
-            args: {
-                relaxedSecurity: true,
-                address: '127.0.0.1',
-                port: 4723
-            },
-            logPath: './'
-        }]
-    ],
+    // Si levantas Appium en una terminal separada (recomendado en Windows),
+    // dejamos services vacío para conectarnos directamente al puerto 4723.
+    services: [],
 
     framework: 'mocha',
     reporters: ['spec'],
