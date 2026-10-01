@@ -1,6 +1,6 @@
 /**
  * Page / Screen Object para la pantalla Dashboard inicial de AJCashStocks.
- * Selectores robustos compatibles con UiSelector, Resource-ID, Content-Desc y Text.
+ * Selectores directos por Accessibility ID (~), Resource-ID y texto nativo.
  */
 export class DashboardScreen {
     /**
@@ -35,14 +35,14 @@ export class DashboardScreen {
      * Botón Añadir Técnico
      */
     get submitAddTechBtn() {
-        return $('//*[contains(@resource-id, "submit_add_tech_button") or @content-desc="submit_add_tech_button" or contains(@text, "Añadir")]');
+        return $('//*[contains(@resource-id, "submit_add_tech_button") or @content-desc="submit_add_tech_button" or @text="Añadir" or contains(@text, "Añadir")]');
     }
 
     /**
      * Botón Listo / Cerrar Gestor
      */
     get closeTechManagerBtn() {
-        return $('//*[contains(@resource-id, "close_technicians_manager_button") or @content-desc="close_technicians_manager_button" or contains(@text, "Listo")]');
+        return $('//*[contains(@resource-id, "close_technicians_manager_button") or @content-desc="close_technicians_manager_button" or @text="Listo" or contains(@text, "Listo")]');
     }
 
     /**
@@ -68,7 +68,7 @@ export class DashboardScreen {
     }
 
     /**
-     * Abre el Gestor de Técnicos de la cabecera, registra al técnico y cierra el modal
+     * Abre el Gestor de Técnicos de la cabecera, registra al técnico pulsando Añadir y cierra con Listo
      */
     async createTechnician(name: string, number: string): Promise<void> {
         // 1. Abrir modal del gestor
@@ -86,47 +86,26 @@ export class DashboardScreen {
         await this.newTechNumberInput.setValue(number);
         await driver.pause(400);
 
-        // 4. Intentar enviar Enter directo en el teclado
+        // 4. Ocultar teclado (o tocar el título para quitar el foco del input)
         try {
-            await driver.pressKeyCode(66); // KEYCODE_ENTER
-            await driver.pause(500);
+            await driver.hideKeyboard();
         } catch {
-            // Continuar
+            try {
+                const titleNode = await $('android=new UiSelector().textContains("Gestor de Técnicos")');
+                await titleNode.click();
+            } catch {}
         }
+        await driver.pause(600);
 
-        // 5. Cerrar teclado de forma segura en Android
-        try {
-            if (await driver.isKeyboardShown()) {
-                await driver.back();
-                await driver.pause(500);
-            }
-        } catch {
-            // Continuar
-        }
+        // 5. Pulsar "Añadir"
+        await this.submitAddTechBtn.waitForDisplayed({ timeout: 10000 });
+        await this.submitAddTechBtn.click();
+        await driver.pause(1000);
 
-        // 6. Pulsar el botón "Añadir"
-        try {
-            await this.submitAddTechBtn.waitForDisplayed({ timeout: 5000 });
-            await this.submitAddTechBtn.click();
-            await driver.pause(1000);
-        } catch {
-            // Ya registrado mediante Enter
-        }
-
-        // 7. Cerrar teclado por si volvió a aparecer
-        try {
-            if (await driver.isKeyboardShown()) {
-                await driver.back();
-                await driver.pause(500);
-            }
-        } catch {
-            // Continuar
-        }
-
-        // 8. Pulsar "Listo" para confirmar y volver al Dashboard
+        // 6. Pulsar "Listo"
         await this.closeTechManagerBtn.waitForDisplayed({ timeout: 10000 });
         await this.closeTechManagerBtn.click();
-        await driver.pause(1200);
+        await driver.pause(1000);
     }
 
     /**
