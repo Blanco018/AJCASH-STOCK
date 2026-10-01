@@ -72,49 +72,50 @@ export class DashboardScreen {
      */
     async createTechnician(name: string, number: string): Promise<void> {
         // 1. Abrir modal del gestor
-        await this.headerTechManagerBtn.waitForDisplayed({ timeout: 10000 });
-        await this.headerTechManagerBtn.click();
+        const openManagerBtn = await $('//*[@text="GESTOR TÉCNICOS" or contains(@resource-id, "header_technicians_manager_button")]');
+        await openManagerBtn.waitForDisplayed({ timeout: 10000 });
+        await openManagerBtn.click();
         await driver.pause(1000);
 
         // 2. Rellenar Nombre
-        await this.newTechNameInput.waitForDisplayed({ timeout: 10000 });
-        await this.newTechNameInput.setValue(name);
+        const nameField = await $('android=new UiSelector().className("android.widget.EditText").instance(0)');
+        await nameField.waitForDisplayed({ timeout: 10000 });
+        await nameField.setValue(name);
         await driver.pause(400);
 
         // 3. Rellenar Número
-        await this.newTechNumberInput.waitForDisplayed({ timeout: 10000 });
-        await this.newTechNumberInput.setValue(number);
+        const numberField = await $('android=new UiSelector().className("android.widget.EditText").instance(1)');
+        await numberField.waitForDisplayed({ timeout: 10000 });
+        await numberField.setValue(number);
         await driver.pause(400);
 
-        // 4. Disparo inmediato vía acción de teclado IME Done (Enter)
+        // 4. Asegurar que el teclado no tape el botón Añadir
         try {
-            await driver.pressKeyCode(66); // KEYCODE_ENTER
-            await driver.pause(600);
-        } catch {
-            // Continuar
-        }
+            if (await driver.isKeyboardShown()) {
+                await driver.hideKeyboard();
+                await driver.pause(400);
+            }
+        } catch {}
 
-        // 5. Clic directo por XPath al botón Añadir
-        try {
-            const addBtn = await $('//*[@text="Añadir" or contains(@text, "Añadir")]');
-            await addBtn.waitForDisplayed({ timeout: 4000 });
-            await addBtn.click();
-            await driver.pause(800);
-        } catch {
-            // Ya registrado mediante IME Done
-        }
+        // 5. Clic directo al botón Añadir por XPath
+        const addBtn = await $('//*[@text="Añadir" or contains(@text, "Añadir")]');
+        await addBtn.waitForDisplayed({ timeout: 10000 });
+        await addBtn.click();
+        await driver.pause(1500);
 
-        // 6. Clic directo por XPath al botón Listo
+        // 6. Asegurar que el teclado esté cerrado para dejar visible el botón Listo
         try {
-            const closeBtn = await $('//*[@text="Listo" or contains(@text, "Listo")]');
-            await closeBtn.waitForDisplayed({ timeout: 5000 });
-            await closeBtn.click();
-            await driver.pause(1000);
-        } catch {
-            const fallbackClose = await $('android=new UiSelector().textContains("Listo")');
-            await fallbackClose.click();
-            await driver.pause(1000);
-        }
+            if (await driver.isKeyboardShown()) {
+                await driver.hideKeyboard();
+                await driver.pause(400);
+            }
+        } catch {}
+
+        // 7. Clic directo al botón Listo por XPath
+        const closeBtn = await $('//*[@text="Listo" or contains(@text, "Listo")]');
+        await closeBtn.waitForDisplayed({ timeout: 10000 });
+        await closeBtn.click();
+        await driver.pause(1200);
     }
 
     /**

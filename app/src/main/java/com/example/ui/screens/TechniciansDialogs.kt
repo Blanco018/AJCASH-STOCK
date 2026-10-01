@@ -63,6 +63,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -108,6 +109,7 @@ fun TechniciansManagerDialog(
     var newTechNumber by remember { mutableStateOf("") }
     var techToDelete by remember { mutableStateOf<Technician?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // Diálogo emergente de confirmación obligatoria para eliminar
     if (showDeleteConfirmDialog && techToDelete != null) {
@@ -308,6 +310,7 @@ fun TechniciansManagerDialog(
                             ),
                             keyboardActions = KeyboardActions(
                                 onDone = {
+                                    keyboardController?.hide()
                                     val nameToAdd = newTechName.trim().ifBlank { "PABLO BLANCO" }
                                     val numToAdd = newTechNumber.trim().ifBlank { "16" }
                                     onAddTechnician(nameToAdd, numToAdd)
@@ -336,6 +339,7 @@ fun TechniciansManagerDialog(
 
                         Button(
                             onClick = {
+                                keyboardController?.hide()
                                 val nameToAdd = newTechName.trim().ifBlank { "PABLO BLANCO" }
                                 val numToAdd = newTechNumber.trim().ifBlank { "16" }
                                 onAddTechnician(nameToAdd, numToAdd)

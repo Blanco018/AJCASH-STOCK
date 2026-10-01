@@ -38,6 +38,8 @@ export const config: Options.Testrunner = {
         'appium:noReset': false,
         'appium:fullReset': false,
         'appium:autoGrantPermissions': true,
+        'appium:unicodeKeyboard': true,
+        'appium:resetKeyboard': true,
         'appium:newCommandTimeout': 180,
         'appium:uiautomator2ServerLaunchTimeout': 60000,
         'appium:ensureWebviewsHavePages': true
