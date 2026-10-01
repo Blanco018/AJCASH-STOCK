@@ -21,8 +21,8 @@ object DemoExpirationManager {
     const val DEMO_DURATION_HOURS = 24L
     const val DEMO_DURATION_MILLIS = DEMO_DURATION_HOURS * 60 * 60 * 1000L
 
-    // Fecha límite estática de referencia (24h desde hoy o fecha absoluta)
-    const val STATIC_EXPIRE_DATE_STRING = "2026-09-22 23:59:59"
+    // Fecha límite estática de referencia para prueba absoluta (por defecto en fecha futura para respetar las 24 horas dinámicas)
+    const val STATIC_EXPIRE_DATE_STRING = "2030-01-01 00:00:00"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

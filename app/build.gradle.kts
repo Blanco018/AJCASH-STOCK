@@ -61,7 +61,19 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all {
+        it.jvmArgs("-Djdk.attach.allowAttachSelf=true")
+      }
+    }
+  }
+  packaging {
+    resources {
+      excludes += setOf("/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}")
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -124,6 +136,7 @@ dependencies {
   implementation(libs.okhttp)
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
+  testImplementation(libs.mockk)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
@@ -136,8 +149,11 @@ dependencies {
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)
+  androidTestImplementation(libs.androidx.espresso.contrib)
+  androidTestImplementation(libs.androidx.rules)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
+  androidTestImplementation(libs.mockk.android)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
