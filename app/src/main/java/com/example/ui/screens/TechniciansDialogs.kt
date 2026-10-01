@@ -363,7 +363,19 @@ fun TechniciansManagerDialog(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Añadir", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text(
+                                text = "Añadir",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                modifier = Modifier.clickable {
+                                    keyboardController?.hide()
+                                    val nameToAdd = newTechName.trim().ifBlank { "PABLO BLANCO" }
+                                    val numToAdd = newTechNumber.trim().ifBlank { "16" }
+                                    onAddTechnician(nameToAdd, numToAdd)
+                                    newTechName = ""
+                                    newTechNumber = ""
+                                }
+                            )
                         }
                     }
                 }
@@ -545,7 +557,13 @@ fun TechniciansManagerDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Listo", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
+                Text(
+                    text = "Listo",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    modifier = Modifier.clickable { onDismiss() }
+                )
             }
         }
     )

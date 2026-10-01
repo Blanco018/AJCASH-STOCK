@@ -35,14 +35,14 @@ export class DashboardScreen {
      * Botón Añadir Técnico por XPath
      */
     get submitAddTechBtn() {
-        return $('//*[@text="Añadir" or contains(@text, "Añadir") or contains(@resource-id, "submit_add_tech_button")]');
+        return $('//*[@text="Añadir" or contains(@text, "Añadir")]');
     }
 
     /**
      * Botón Listo / Cerrar Gestor por XPath
      */
     get closeTechManagerBtn() {
-        return $('//*[@text="Listo" or contains(@text, "Listo") or contains(@resource-id, "close_technicians_manager_button")]');
+        return $('//*[@text="Listo" or contains(@text, "Listo")]');
     }
 
     /**
@@ -89,29 +89,13 @@ export class DashboardScreen {
         await numberField.setValue(number);
         await driver.pause(400);
 
-        // 4. Asegurar que el teclado no tape el botón Añadir
-        try {
-            if (await driver.isKeyboardShown()) {
-                await driver.hideKeyboard();
-                await driver.pause(400);
-            }
-        } catch {}
-
-        // 5. Clic directo al botón Añadir por XPath
+        // 4. Clic directo al botón Añadir por XPath
         const addBtn = await $('//*[@text="Añadir" or contains(@text, "Añadir")]');
         await addBtn.waitForDisplayed({ timeout: 10000 });
         await addBtn.click();
         await driver.pause(1500);
 
-        // 6. Asegurar que el teclado esté cerrado para dejar visible el botón Listo
-        try {
-            if (await driver.isKeyboardShown()) {
-                await driver.hideKeyboard();
-                await driver.pause(400);
-            }
-        } catch {}
-
-        // 7. Clic directo al botón Listo por XPath
+        // 5. Clic directo al botón Listo por XPath
         const closeBtn = await $('//*[@text="Listo" or contains(@text, "Listo")]');
         await closeBtn.waitForDisplayed({ timeout: 10000 });
         await closeBtn.click();
