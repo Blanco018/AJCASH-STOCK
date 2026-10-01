@@ -42,6 +42,15 @@ export class InventoryScreen {
      * Escribe un término en la barra de búsqueda y espera la reacción de Compose
      */
     async searchProduct(query: string): Promise<void> {
+        try {
+            await this.searchInput.waitForDisplayed({ timeout: 6000 });
+        } catch {
+            try {
+                await $('android=new UiScrollable(new UiSelector().scrollable(true)).scrollForward()');
+            } catch {
+                // Continuar
+            }
+        }
         await this.searchInput.waitForDisplayed({ timeout: 10000 });
         await this.searchInput.setValue(query);
         await driver.pause(1000); // Pausa de estabilización reactiva

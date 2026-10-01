@@ -8,8 +8,17 @@ describe('AJCashStocks - Mobile Automation Suite (Appium + WebdriverIO)', () => 
         expect(isDashboardVisible).toBe(true);
     });
 
-    it('TC02: Debe ingresar al inventario de la Furgoneta 1 tras autorizar el técnico', async () => {
-        // Seleccionar Furgoneta 1 e ingresar
+    it('TC02: Debe registrar al técnico de guardia "PABLO BLANCO (Nº 16)" en el Gestor', async () => {
+        // Crear al técnico Pablo Blanco
+        await DashboardScreen.createTechnician('PABLO BLANCO', '16');
+
+        // Confirmar que regresamos al Dashboard con el gestor cerrado
+        const isDashboardBack = await DashboardScreen.isDisplayed();
+        expect(isDashboardBack).toBe(true);
+    });
+
+    it('TC03: Debe ingresar al inventario del vehículo con el técnico autorizado', async () => {
+        // Seleccionar vehículo e ingresar con el técnico asignado
         await DashboardScreen.enterVan1Inventory();
 
         // Validar que la vista de inventario del vehículo está activa
@@ -17,7 +26,7 @@ describe('AJCashStocks - Mobile Automation Suite (Appium + WebdriverIO)', () => 
         expect(isInventoryVisible).toBe(true);
     });
 
-    it('TC03: Debe filtrar el catálogo de repuestos al buscar "TPV"', async () => {
+    it('TC04: Debe filtrar el catálogo de repuestos al buscar "TPV"', async () => {
         // Buscar el término TPV
         await InventoryScreen.searchProduct('TPV');
 
@@ -28,7 +37,7 @@ describe('AJCashStocks - Mobile Automation Suite (Appium + WebdriverIO)', () => 
         expect(isTpvDisplayed).toBe(true);
     });
 
-    it('TC04: Debe volver al Dashboard principal al pulsar el botón Atrás', async () => {
+    it('TC05: Debe volver al Dashboard principal al pulsar el botón Atrás', async () => {
         // Presionar botón Atrás
         await InventoryScreen.clickBack();
 
