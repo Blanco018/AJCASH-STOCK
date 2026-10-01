@@ -245,7 +245,11 @@ class StockRepository(
             number = cleanNumber
         )
         technicianDao.insertTechnician(tech)
-        firestoreService?.saveRemoteTechnician(tech)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                firestoreService?.saveRemoteTechnician(tech)
+            } catch (_: Exception) {}
+        }
         Result.success(tech)
     }
 

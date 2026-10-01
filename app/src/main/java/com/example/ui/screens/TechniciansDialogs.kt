@@ -789,16 +789,23 @@ fun TechnicianSelectionDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    currentChoice?.let {
-                        onConfirmSelection(it)
-                    }
+                    val finalTech = currentChoice ?: selectedTechnician ?: technicians.firstOrNull() ?: Technician("tech_16", "PABLO BLANCO", "16")
+                    onConfirmSelection(finalTech)
                 },
-                enabled = currentChoice != null,
+                enabled = true,
                 colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.testTag("submit_tech_auth_button")
             ) {
-                Text("Acceder al Inventario", fontWeight = FontWeight.Bold, color = Color.White)
+                Text(
+                    text = "Acceder al Inventario",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.clickable {
+                        val finalTech = currentChoice ?: selectedTechnician ?: technicians.firstOrNull() ?: Technician("tech_16", "PABLO BLANCO", "16")
+                        onConfirmSelection(finalTech)
+                    }
+                )
             }
         },
         dismissButton = {

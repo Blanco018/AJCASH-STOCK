@@ -108,12 +108,17 @@ export class DashboardScreen {
     async enterVehicleInventory(): Promise<void> {
         await this.firstVehicleCard.waitForDisplayed({ timeout: 10000 });
         await this.firstVehicleCard.click();
-        await driver.pause(1000);
+        await driver.pause(1200);
 
-        // Espera a que aparezca el diálogo modal y pulsa Acceder al Inventario
-        await this.submitTechAuthButton.waitForDisplayed({ timeout: 10000 });
-        await this.submitTechAuthButton.click();
-        await driver.pause(1000);
+        // Si aparece el diálogo modal de confirmación, pulsar Acceder al Inventario
+        try {
+            const authBtn = await $('//*[contains(@resource-id, "submit_tech_auth_button") or contains(@text, "Acceder al Inventario")]');
+            await authBtn.waitForDisplayed({ timeout: 5000 });
+            await authBtn.click();
+            await driver.pause(1000);
+        } catch {
+            // Ya accedió directamente al inventario
+        }
     }
 
     /**

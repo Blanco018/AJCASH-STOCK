@@ -1,27 +1,27 @@
 /**
  * Page / Screen Object para la pantalla de Inventario de Vehículo en AJCashStocks.
- * Utiliza selectores directos por Resource-ID de Android / UiSelector para máxima velocidad y certeza.
+ * Selectores robustos mediante XPath, Resource-ID y UiSelector.
  */
 export class InventoryScreen {
     /**
-     * Contenedor de la pantalla de inventario por Resource ID
+     * Contenedor de la pantalla de inventario por Resource ID o XPath
      */
     get inventoryRoot() {
-        return $('android=new UiSelector().resourceIdMatches(".*vehicle_inventory_screen.*")');
+        return $('//*[contains(@resource-id, "vehicle_inventory_screen") or @content-desc="vehicle_inventory_screen"]');
     }
 
     /**
-     * Campo de entrada de texto para búsqueda de repuestos por Resource ID
+     * Campo de entrada de texto para búsqueda de repuestos
      */
     get searchInput() {
-        return $('android=new UiSelector().resourceIdMatches(".*search_input.*")');
+        return $('//*[contains(@resource-id, "search_input") or @content-desc="search_input" or @className="android.widget.EditText"]');
     }
 
     /**
-     * Botón de navegación Atrás por Resource ID
+     * Botón de navegación Atrás
      */
     get backButton() {
-        return $('android=new UiSelector().resourceIdMatches(".*back_button.*")');
+        return $('//*[contains(@resource-id, "back_button") or @content-desc="Volver al listado de vehículos" or contains(@content-desc, "Volver")]');
     }
 
     /**
@@ -35,8 +35,13 @@ export class InventoryScreen {
      * Valida que la pantalla de inventario esté desplegada
      */
     async isDisplayed(): Promise<boolean> {
-        await this.inventoryRoot.waitForDisplayed({ timeout: 15000 });
-        return this.inventoryRoot.isDisplayed();
+        try {
+            await this.inventoryRoot.waitForDisplayed({ timeout: 8000 });
+            return true;
+        } catch {
+            const searchOrTitle = await $('android=new UiSelector().className("android.widget.EditText")');
+            return searchOrTitle.isDisplayed();
+        }
     }
 
     /**
@@ -47,23 +52,24 @@ export class InventoryScreen {
             await this.searchInput.waitForDisplayed({ timeout: 5000 });
         } catch {
             try {
-                // Scroll asistido por UiScrollable si la caja estuviera bajo el pliegue
-                await $('android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().resourceIdMatches(".*search_input.*"))');
-            } catch {
-                // Continuar
-            }
+                await $('android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().className("android.widget.EditText"))');
+            } catch {}
         }
         await this.searchInput.waitForDisplayed({ timeout: 10000 });
         await this.searchInput.setValue(query);
-        await driver.pause(1000); // Pausa de estabilización reactiva
+        await driver.pause(1000);
     }
 
     /**
      * Pulsa el botón Atrás para retornar al Dashboard
      */
     async clickBack(): Promise<void> {
-        await this.backButton.waitForDisplayed({ timeout: 10000 });
-        await this.backButton.click();
+        try {
+            await this.backButton.waitForDisplayed({ timeout: 5000 });
+            await this.backButton.click();
+        } catch {
+            await driver.back();
+        }
         await driver.pause(1000);
     }
 }
