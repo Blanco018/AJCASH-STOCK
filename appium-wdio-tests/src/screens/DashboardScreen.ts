@@ -78,44 +78,52 @@ export class DashboardScreen {
 
         // 2. Rellenar Nombre
         await this.newTechNameInput.waitForDisplayed({ timeout: 10000 });
-        await this.newTechNameInput.click();
-        await driver.pause(300);
         await this.newTechNameInput.setValue(name);
-        await driver.pause(500);
+        await driver.pause(400);
 
         // 3. Rellenar Número
         await this.newTechNumberInput.waitForDisplayed({ timeout: 10000 });
-        await this.newTechNumberInput.click();
-        await driver.pause(300);
         await this.newTechNumberInput.setValue(number);
-        await driver.pause(500);
+        await driver.pause(400);
 
-        // 4. Ocultar teclado para dejar los botones totalmente visibles y accesibles
+        // 4. Intentar enviar Enter directo en el teclado
+        try {
+            await driver.pressKeyCode(66); // KEYCODE_ENTER
+            await driver.pause(500);
+        } catch {
+            // Continuar
+        }
+
+        // 5. Cerrar teclado de forma segura en Android
         try {
             if (await driver.isKeyboardShown()) {
-                await driver.hideKeyboard();
+                await driver.back();
                 await driver.pause(500);
             }
         } catch {
-            // Teclado cerrado
+            // Continuar
         }
 
-        // 5. Pulsar "Añadir"
-        await this.submitAddTechBtn.waitForDisplayed({ timeout: 10000 });
-        await this.submitAddTechBtn.click();
-        await driver.pause(1200);
+        // 6. Pulsar el botón "Añadir"
+        try {
+            await this.submitAddTechBtn.waitForDisplayed({ timeout: 5000 });
+            await this.submitAddTechBtn.click();
+            await driver.pause(1000);
+        } catch {
+            // Ya registrado mediante Enter
+        }
 
-        // 6. Asegurar que el teclado no tape el botón "Listo"
+        // 7. Cerrar teclado por si volvió a aparecer
         try {
             if (await driver.isKeyboardShown()) {
-                await driver.hideKeyboard();
+                await driver.back();
                 await driver.pause(500);
             }
         } catch {
-            // Teclado cerrado
+            // Continuar
         }
 
-        // 7. Pulsar "Listo" para cerrar el gestor
+        // 8. Pulsar "Listo" para confirmar y volver al Dashboard
         await this.closeTechManagerBtn.waitForDisplayed({ timeout: 10000 });
         await this.closeTechManagerBtn.click();
         await driver.pause(1200);

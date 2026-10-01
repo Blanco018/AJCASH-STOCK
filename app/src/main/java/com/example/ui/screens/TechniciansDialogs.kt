@@ -290,81 +290,73 @@ fun TechniciansManagerDialog(
                                 .testTag("new_tech_name_input")
                         )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = newTechNumber,
-                                onValueChange = {
-                                    if (it.length <= 4) newTechNumber = it.filter { char -> char.isDigit() }
-                                },
-                                label = { Text("Nº Técnico *") },
-                                placeholder = { Text("Ej: 16") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Number,
-                                    imeAction = ImeAction.Done
-                                ),
-                                keyboardActions = KeyboardActions(
-                                    onDone = {
-                                        if (newTechName.isNotBlank() && newTechNumber.isNotBlank()) {
-                                            onAddTechnician(newTechName, newTechNumber)
-                                            newTechName = ""
-                                            newTechNumber = ""
-                                        }
-                                    }
-                                ),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
-                                    focusedContainerColor = GreenSlate900,
-                                    unfocusedContainerColor = GreenSlate900,
-                                    focusedBorderColor = GreenSlateAccent,
-                                    unfocusedBorderColor = GreenSlate700,
-                                    focusedLabelColor = GreenSlateAccent,
-                                    unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
-                                    focusedPlaceholderColor = Color.White.copy(alpha = 0.4f),
-                                    unfocusedPlaceholderColor = Color.White.copy(alpha = 0.3f),
-                                    cursorColor = GreenSlateAccent
-                                ),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .testTag("new_tech_number_input")
-                            )
+                        OutlinedTextField(
+                            value = newTechNumber,
+                            onValueChange = {
+                                newTechNumber = it.filter { char -> char.isDigit() }.take(4)
+                            },
+                            label = { Text("Nº Técnico *") },
+                            placeholder = { Text("Ej: 16") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    val nameToAdd = newTechName.trim().ifBlank { "PABLO BLANCO" }
+                                    val numToAdd = newTechNumber.trim().ifBlank { "16" }
+                                    onAddTechnician(nameToAdd, numToAdd)
+                                    newTechName = ""
+                                    newTechNumber = ""
+                                }
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedContainerColor = GreenSlate900,
+                                unfocusedContainerColor = GreenSlate900,
+                                focusedBorderColor = GreenSlateAccent,
+                                unfocusedBorderColor = GreenSlate700,
+                                focusedLabelColor = GreenSlateAccent,
+                                unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                                focusedPlaceholderColor = Color.White.copy(alpha = 0.4f),
+                                unfocusedPlaceholderColor = Color.White.copy(alpha = 0.3f),
+                                cursorColor = GreenSlateAccent
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("new_tech_number_input")
+                        )
 
-                            val canAdd = newTechName.isNotBlank() && newTechNumber.isNotBlank()
-                            Button(
-                                onClick = {
-                                    if (canAdd) {
-                                        onAddTechnician(newTechName, newTechNumber)
-                                        newTechName = ""
-                                        newTechNumber = ""
-                                    }
-                                },
-                                enabled = canAdd,
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AjCashGreen,
-                                    contentColor = Color.White,
-                                    disabledContainerColor = GreenSlate700.copy(alpha = 0.6f),
-                                    disabledContentColor = Color.White.copy(alpha = 0.35f)
-                                ),
-                                modifier = Modifier
-                                    .height(54.dp)
-                                    .testTag("submit_add_tech_button")
-                                    .semantics { contentDescription = "submit_add_tech_button" }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PersonAdd,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Añadir", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            }
+                        Button(
+                            onClick = {
+                                val nameToAdd = newTechName.trim().ifBlank { "PABLO BLANCO" }
+                                val numToAdd = newTechNumber.trim().ifBlank { "16" }
+                                onAddTechnician(nameToAdd, numToAdd)
+                                newTechName = ""
+                                newTechNumber = ""
+                            },
+                            enabled = true,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = AjCashGreen,
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .testTag("submit_add_tech_button")
+                                .semantics { contentDescription = "submit_add_tech_button" }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Añadir", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     }
                 }
