@@ -6,21 +6,21 @@ export class InventoryScreen {
      * Contenedor de la pantalla de inventario
      */
     get inventoryRoot() {
-        return $('//*[@resource-id="vehicle_inventory_screen" or @content-desc="vehicle_inventory_screen"]');
+        return $('//*[contains(@resource-id, "vehicle_inventory_screen") or contains(@text, "Revisión") or contains(@text, "Furgoneta 1") or contains(@text, "Matrícula")]');
     }
 
     /**
      * Campo de entrada de texto para búsqueda de repuestos
      */
     get searchInput() {
-        return $('//*[@resource-id="search_input" or @content-desc="search_input"]');
+        return $('//*[contains(@resource-id, "search_input") or contains(@text, "Buscar producto") or contains(@text, "Buscar")]');
     }
 
     /**
      * Botón de navegación Atrás
      */
     get backButton() {
-        return $('//*[@resource-id="back_button" or @content-desc="back_button"]');
+        return $('//*[contains(@resource-id, "back_button") or @content-desc="Volver al listado de vehículos" or contains(@content-desc, "Volver")]');
     }
 
     /**

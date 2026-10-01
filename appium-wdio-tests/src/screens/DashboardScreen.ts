@@ -13,14 +13,14 @@ export class DashboardScreen {
      * Selector de la tarjeta del vehículo de guardia (Furgoneta 1)
      */
     get van1Card() {
-        return $('//*[@resource-id="vehicle_card_furgoneta-1" or @content-desc="vehicle_card_furgoneta-1"]');
+        return $('//*[contains(@resource-id, "vehicle_card_furgoneta_1") or contains(@resource-id, "furgoneta") or contains(@text, "Furgoneta 1")]');
     }
 
     /**
      * Botón de confirmación / asignación del Técnico de Guardia en el diálogo
      */
     get submitTechAuthButton() {
-        return $('//*[@resource-id="submit_tech_auth_button" or @content-desc="submit_tech_auth_button"]');
+        return $('//*[contains(@resource-id, "submit_tech_auth_button") or contains(@text, "Acceder al Inventario")]');
     }
 
     /**
