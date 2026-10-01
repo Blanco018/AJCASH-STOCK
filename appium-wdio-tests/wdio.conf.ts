@@ -32,8 +32,9 @@ export const config: Options.Testrunner = {
         'appium:deviceName': 'Android_Device',
         // Ruta al binario APK compilado por Gradle
         'appium:app': path.resolve(__dirname, '../app/build/outputs/apk/debug/app-debug.apk'),
-        'appium:appPackage': 'com.example',
+        'appium:appPackage': 'com.aistudio.ajcashstock.vkpq',
         'appium:appActivity': 'com.example.MainActivity',
+        'appium:appWaitActivity': 'com.example.MainActivity,com.example.*',
         'appium:noReset': false,
         'appium:fullReset': false,
         'appium:autoGrantPermissions': true,
