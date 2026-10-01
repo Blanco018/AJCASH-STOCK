@@ -6,7 +6,7 @@ export class InventoryScreen {
      * Contenedor de la pantalla de inventario
      */
     get inventoryRoot() {
-        return $('//*[contains(@resource-id, "vehicle_inventory_screen") or contains(@text, "Revisión") or contains(@text, "Furgoneta 1") or contains(@text, "Matrícula")]');
+        return $('//*[contains(@resource-id, "vehicle_inventory_screen") or contains(@text, "Revisión") or contains(@text, "Coche 1") or contains(@text, "Furgoneta 1") or contains(@text, "Matrícula")]');
     }
 
     /**
@@ -53,6 +53,7 @@ export class InventoryScreen {
     async clickBack(): Promise<void> {
         await this.backButton.waitForDisplayed({ timeout: 10000 });
         await this.backButton.click();
+        await driver.pause(1000);
     }
 }
 

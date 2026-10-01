@@ -10,10 +10,10 @@ export class DashboardScreen {
     }
 
     /**
-     * Selector de la tarjeta del vehículo de guardia (Furgoneta 1)
+     * Selector de la tarjeta del vehículo de guardia (Coche 1 o Furgoneta 1)
      */
     get van1Card() {
-        return $('//*[contains(@resource-id, "vehicle_card_furgoneta_1") or contains(@resource-id, "furgoneta") or contains(@text, "Furgoneta 1")]');
+        return $('//*[contains(@resource-id, "vehicle_card_") or contains(@text, "Coche 1") or contains(@text, "Furgoneta 1")]');
     }
 
     /**
@@ -32,15 +32,17 @@ export class DashboardScreen {
     }
 
     /**
-     * Selecciona la Furgoneta 1 y confirma el técnico de guardia
+     * Selecciona el primer vehículo visible y confirma el técnico de guardia
      */
     async enterVan1Inventory(): Promise<void> {
         await this.van1Card.waitForDisplayed({ timeout: 10000 });
         await this.van1Card.click();
+        await driver.pause(800);
 
         // Espera a que aparezca el diálogo modal y confirma
         await this.submitTechAuthButton.waitForDisplayed({ timeout: 10000 });
         await this.submitTechAuthButton.click();
+        await driver.pause(1000);
     }
 }
 
