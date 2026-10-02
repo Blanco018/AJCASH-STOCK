@@ -49,14 +49,14 @@ export class InventoryScreen {
      */
     async searchProduct(query: string): Promise<void> {
         try {
-            await this.searchInput.waitForDisplayed({ timeout: 5000 });
+            const input = await $('//*[contains(@resource-id, "search_input") or @content-desc="search_input" or @className="android.widget.EditText"]');
+            await input.waitForDisplayed({ timeout: 8000 });
+            await input.setValue(query);
         } catch {
-            try {
-                await $('android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().className("android.widget.EditText"))');
-            } catch {}
+            const fallbackInput = await $('android=new UiSelector().className("android.widget.EditText")');
+            await fallbackInput.waitForDisplayed({ timeout: 8000 });
+            await fallbackInput.setValue(query);
         }
-        await this.searchInput.waitForDisplayed({ timeout: 10000 });
-        await this.searchInput.setValue(query);
         await driver.pause(1000);
     }
 
