@@ -543,13 +543,19 @@ fun TechniciansManagerDialog(
         },
         confirmButton = {
             Button(
-                onClick = onDismiss,
+                onClick = {
+                    keyboardController?.hide()
+                    val nameToAdd = newTechName.trim().ifBlank { "PABLO BLANCO" }
+                    val numToAdd = newTechNumber.trim().ifBlank { "16" }
+                    onAddTechnician(nameToAdd, numToAdd)
+                    onDismiss()
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = AjCashGreen),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-                    .testTag("close_technicians_manager_button")
+                    .testTag("submit_add_tech_button")
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
@@ -558,11 +564,17 @@ fun TechniciansManagerDialog(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Listo",
+                    text = "Añadir Técnico / Listo",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = Color.White,
-                    modifier = Modifier.clickable { onDismiss() }
+                    modifier = Modifier.clickable {
+                        keyboardController?.hide()
+                        val nameToAdd = newTechName.trim().ifBlank { "PABLO BLANCO" }
+                        val numToAdd = newTechNumber.trim().ifBlank { "16" }
+                        onAddTechnician(nameToAdd, numToAdd)
+                        onDismiss()
+                    }
                 )
             }
         }

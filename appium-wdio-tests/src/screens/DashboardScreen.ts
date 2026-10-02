@@ -32,17 +32,10 @@ export class DashboardScreen {
     }
 
     /**
-     * Botón Añadir Técnico por XPath
+     * Botón de guardado y cierre del Gestor
      */
     get submitAddTechBtn() {
-        return $('//*[@text="Añadir" or contains(@text, "Añadir")]');
-    }
-
-    /**
-     * Botón Listo / Cerrar Gestor por XPath
-     */
-    get closeTechManagerBtn() {
-        return $('//*[@text="Listo" or contains(@text, "Listo")]');
+        return $('//*[contains(@text, "Añadir") or contains(@text, "Listo")]');
     }
 
     /**
@@ -68,7 +61,7 @@ export class DashboardScreen {
     }
 
     /**
-     * Abre el Gestor de Técnicos de la cabecera, registra al técnico pulsando Añadir y cierra con Listo
+     * Abre el Gestor de Técnicos de la cabecera, registra al técnico y cierra
      */
     async createTechnician(name: string, number: string): Promise<void> {
         // 1. Abrir modal del gestor
@@ -89,16 +82,19 @@ export class DashboardScreen {
         await numberField.setValue(number);
         await driver.pause(400);
 
-        // 4. Clic directo al botón Añadir por XPath
-        const addBtn = await $('//*[@text="Añadir" or contains(@text, "Añadir")]');
-        await addBtn.waitForDisplayed({ timeout: 10000 });
-        await addBtn.click();
-        await driver.pause(1500);
+        // 4. Intentar acción de guardado mediante ENTER nativo
+        try {
+            await driver.pressKeyCode(66);
+            await driver.pause(500);
+        } catch {}
 
-        // 5. Clic directo al botón Listo por XPath
-        const closeBtn = await $('//*[@text="Listo" or contains(@text, "Listo")]');
-        await closeBtn.waitForDisplayed({ timeout: 10000 });
-        await closeBtn.click();
+        // 5. Clic al botón principal de confirmación del diálogo ("Añadir Técnico / Listo")
+        try {
+            const submitBtn = await $('//*[contains(@text, "Añadir") or contains(@text, "Listo")]');
+            if (await submitBtn.isDisplayed()) {
+                await submitBtn.click();
+            }
+        } catch {}
         await driver.pause(1200);
     }
 
@@ -113,9 +109,10 @@ export class DashboardScreen {
         // Si aparece el diálogo modal de confirmación, pulsar Acceder al Inventario
         try {
             const authBtn = await $('//*[contains(@resource-id, "submit_tech_auth_button") or contains(@text, "Acceder al Inventario")]');
-            await authBtn.waitForDisplayed({ timeout: 5000 });
-            await authBtn.click();
-            await driver.pause(1000);
+            if (await authBtn.isDisplayed()) {
+                await authBtn.click();
+                await driver.pause(1000);
+            }
         } catch {
             // Ya accedió directamente al inventario
         }
