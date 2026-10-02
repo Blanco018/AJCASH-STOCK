@@ -88,14 +88,25 @@ export class DashboardScreen {
             await driver.pause(500);
         } catch {}
 
-        // 5. Clic al botón principal de confirmación del diálogo ("Añadir Técnico / Listo")
+        // 5. Clic al botón principal de confirmación del diálogo
         try {
             const submitBtn = await $('//*[contains(@text, "Añadir") or contains(@text, "Listo")]');
             if (await submitBtn.isDisplayed()) {
                 await submitBtn.click();
+                await driver.pause(800);
             }
         } catch {}
-        await driver.pause(1200);
+
+        // 6. Salvaguarda: si por alguna razón el diálogo sigue en pantalla, pulsar atrás para cerrarlo
+        try {
+            const modalHeader = await $('//*[@text="GESTOR DE TÉCNICOS"]');
+            if (await modalHeader.isDisplayed()) {
+                await driver.back();
+                await driver.pause(600);
+            }
+        } catch {}
+
+        await driver.pause(1000);
     }
 
     /**
